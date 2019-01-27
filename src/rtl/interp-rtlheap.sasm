@@ -1,0 +1,197 @@
+;; interp-rtlheap.sasm
+;;
+;; Heap stub routines to interface the interpreter to the compiler
+;; system
+
+(export cp-rtl-malloc-failed)
+(export rtl-gc-mark-pointer)
+(export cp-rtl-malloc)
+(export cp-rtl-mark-all-roots)
+(export gc-root-stack-limit)
+
+(extern gc-mark-pointer)
+(extern gc-mark-stack-roots)
+(extern gc-invoke)
+(extern cp-rtl-base-malloc)
+(extern mm-heap-add-area)
+(extern mm-heap-add-fixed-area)
+
+;; Normally this global is defined in the C stub.  Since there
+;; is no such thing for the interpreter, it is defined here.
+(global gc-root-stack-limit (const 8192))
+
+;; This global tracks whether the interpreter's heap has been
+;; initialized yet or not.
+(global initialized-heap-already (const 0))
+
+(function (name cp-rtl-mark-all-roots)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (perform (op call) (label gc-mark-stack-roots))
+
+                ;;
+                ;; Mark auxiliary stack pointers.
+                ;;
+
+                (assign (reg this) (op interp-gc-auxiliary-stack))
+
+;                ;; begin DEBUG
+;                (perform (op debug-out) (const "interp-gc-auxiliary-stack=") (reg this))
+;                ;; end DEBUG
+
+                (assign (reg operand) (op interp-gc-memory-area-size) (reg this))
+                (assign (reg index) (const 0))
+                (label mark-auxiliary-stack/begin)
+                (assign (reg accum) (op less-than) (reg index) (reg operand))
+                (branch-zero (label mark-auxiliary-stack/end) (reg accum))
+                (assign (reg accum) (op interp-gc-memory-ref) (reg this) (reg index))
+                (save (reg this))
+                (save (reg operand))
+                (save (reg index))
+                (push (reg accum))
+                (perform (op call) (label rtl-gc-mark-pointer))
+                (pop (const 1))
+                (restore (reg index))
+                (restore (reg operand))
+                (restore (reg this))
+
+                (assign (reg index) (op add) (reg index) (const 1))
+                (goto (label mark-auxiliary-stack/begin))
+                (label mark-auxiliary-stack/end)
+
+                ;;
+                ;; Mark global pointers.
+                ;;
+
+                (assign (reg this) (op interp-gc-global-addrs))
+                (assign (reg operand) (op interp-gc-memory-area-size) (reg this))
+                (assign (reg index) (const 0))
+                (label mark-globals/begin)
+                (assign (reg accum) (op less-than) (reg index) (reg operand))
+                (branch-zero (label mark-globals/end) (reg accum))
+                (assign (reg accum) (op interp-gc-memory-ref) (reg this) (reg index))
+                (save (reg this))
+                (save (reg operand))
+                (save (reg index))
+                (push (reg accum))
+                (perform (op call) (label rtl-gc-mark-pointer))
+                (pop (const 1))
+                (restore (reg index))
+                (restore (reg operand))
+                (restore (reg this))
+
+                (assign (reg index) (op add) (reg index) (const 1))
+                (goto (label mark-globals/begin))
+                (label mark-globals/end)
+
+                (perform (op pop-frame))
+                (return (const 0))))
+
+;; This routine wraps gc-mark-pointer.  Since this code runs in the
+;; interpreter, it checks a memory cell to see if it contains a symbol
+;; or other non-numerical value.
+(function (name rtl-gc-mark-pointer)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                ;;
+                ;; This 'not-an-number' operation is only supported by
+                ;; the interpreter.
+                ;;
+
+                (test (op interp-gc-not-a-number) (arg 0))
+                (branch-false (label rtl-gc-mark-pointer/address))
+
+                ;;
+                ;; The address is not a number.  It could be a
+                ;; symbolic interpreter address, however it might be
+                ;; something else such as a return address.  Rule such
+                ;; objects out first.
+                ;;
+
+                (test (op interp-gc-test-symbolic-pointer) (arg 0))
+                (branch-false (label rtl-gc-mark-pointer/end))
+
+                ;;
+                ;; The address is a symbolic interpreter address that
+                ;; references a memory area.  We can use a couple of
+                ;; specialized interpreter operations to walk that
+                ;; memory area and mark any pointers.
+                ;;
+
+                (assign (reg operand) (op interp-gc-memory-area-size) (arg 0))
+                (assign (reg index) (const 0))
+
+                (label walk-symbolic-memory-area/begin)
+                (assign (reg accum) (op less-than) (reg index) (reg operand))
+                (branch-zero (label rtl-gc-mark-pointer/end) (reg accum))
+                (assign (reg accum) (op interp-gc-memory-ref) (arg 0) (reg index))
+                (save (reg index))
+                (save (reg operand))
+                (push (reg accum))
+                (perform (op call) (label rtl-gc-mark-pointer))
+                (pop (const 1))
+                (restore (reg operand))
+                (restore (reg index))
+                (assign (reg index) (op add) (reg index) (const 1))
+                (goto (label walk-symbolic-memory-area/begin))
+
+                (label rtl-gc-mark-pointer/address)
+                (push (arg 0))
+                (perform (op call) (const gc-mark-pointer))
+
+                (label rtl-gc-mark-pointer/end)
+                (perform (op pop-frame))
+                (return (const 0))))
+
+(function (name cp-rtl-malloc-failed)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                ;; This operation isn't actually supported by the
+                ;; interpreter, but it will cause the interpreter to
+                ;; stop.
+                (perform (op debug-break))
+                (assign (reg accum) (const 0))
+
+                (perform (op pop-frame))
+                (return (const 1))))
+
+(function (name cp-rtl-malloc)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                ;; Check to see if we've already initialized the heap.
+                (assign (temp test) (op load-array) (const initialized-heap-already) (const 0))
+                (test (op nonzero) (temp test))
+                (branch-true (label cp-rtl-malloc/initialized))
+
+                ;; Add a variable-sized allocation heap area.
+                (push (const 40320))
+                (push (const 9216))
+                (perform (op call) (const mm-heap-add-area))
+
+                ;; Add a fixed-size allocation heap area.
+                (push (const 16000))
+                (push (const 16))
+                (push (const 49536))
+                (perform (op call) (const mm-heap-add-fixed-area))
+
+                ;; Remember that we initialized the heap.
+                (perform (op store-array) (const initialized-heap-already) (const 0) (const 1))
+
+                (label cp-rtl-malloc/initialized)
+
+                ;; Call the underlying malloc function, result in accum.
+                (push (arg 0))
+                (perform (op call) (const cp-rtl-base-malloc))
+
+                ;; Done.
+                (perform (op pop-frame))
+                (return (const 1))))
+

@@ -1,0 +1,48 @@
+(include "mm-param.sasm")
+(include "gc-defines.sasm")
+(include "gc-externs.sasm")
+
+(export gc-mark-class-instance)
+
+(function 
+ (name gc-mark-class-instance)
+ (locals 0)
+ (body (perform (op push-frame))
+       (perform (op reserve-locals) (const 0))
+
+       ;; test if we have already marked this object
+
+       (assign (temp gcdw) (op load-array) (arg 0) (const 1))
+       (assign (temp test) (op bit-and) (temp gcdw) (symconst gcdw:mark-mask))
+       (branch-nonzero (label gc-mark-class-instance/end) (temp test))
+
+       ;; we haven't; mark it
+
+       (assign (temp gcdw) (op bit-or) (temp gcdw) (symconst gcdw:mark-mask))
+       (perform (op store-array) (arg 0) (const 1) (temp gcdw))
+
+       ;; figure out how many child objects it has
+
+       (assign (temp class-descriptor) (op load-array) (arg 0) (const 0))
+       (assign (temp n-items) (op load-array) (temp class-descriptor) (const 0))
+       (assign (temp members) (op add-pointer) (arg 0) (const 2))
+
+       ;; loop through the children and mark them (no pointer reversal yet)
+
+       (assign (temp item) (const 0))
+       (label gc-mark-class-instance/begin)
+       (assign (temp test) (op less-than) (temp item) (temp n-items))
+       (branch-zero (label gc-mark-class-instance/end) (temp test))
+
+       (assign (temp ptr) (op load-array) (temp members) (temp item))
+       (push (temp ptr))
+       (perform (op call) (const rtl-gc-mark-pointer))
+       (pop (const 1))
+
+       (assign (temp item) (op add) (temp item) (const 1))
+       (goto (label gc-mark-class-instance/begin))
+
+       (label gc-mark-class-instance/end)
+       (perform (op pop-frame))
+       (return (const 1))))
+

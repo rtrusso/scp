@@ -1,0 +1,5 @@
+%.spim-out : spim-files/%-spim.s
+	./spim -quiet -asm -file $< >$@
+
+out-files : $(patsubst spim-files/%-spim.s,%.spim-out,$(wildcard spim-files/*-spim.s))
+

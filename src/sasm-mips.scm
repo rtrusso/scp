@@ -1,0 +1,5 @@
+(need sasm/sasm)
+(need sasm/sasm-mips)
+(sasm-set-target-mips!)
+(sasm-set-mips-hw-params!)
+(sasm-assembler-main *argv*)

@@ -1,0 +1,32 @@
+;; externs: mj-system-out-println
+;; defined: my-main-function my-test-function
+;; referenced: mj-system-out-println my-test-function
+
+
+(entry @main:my-main-function)
+(extern mj-system-out-println)
+(function
+  (name @main:my-test-function)
+  (locals 0)
+  (body
+    (perform (op push-frame))
+    (perform (op reserve-locals) (const 0))
+    (assign (reg accum) (const 3))
+    (assign (reg accum) (op mul) (reg accum) (const 5))
+    (push (reg accum))
+    (perform (op call) (label mj-system-out-println))
+    (perform (op pop-frame))
+    (return (const 0))
+    ))
+
+(function
+  (name @main:my-main-function)
+  (locals 0)
+  (body
+    (perform (op push-frame))
+    (perform (op reserve-locals) (const 0))
+    (perform (op call) (label @main:my-test-function))
+    (perform (op pop-frame))
+    (return (const 0))
+    ))
+

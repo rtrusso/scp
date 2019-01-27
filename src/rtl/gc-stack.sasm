@@ -1,0 +1,60 @@
+(include "mm-param.sasm")
+(include "gc-defines.sasm")
+(include "gc-externs.sasm")
+
+(export gc-mark-stack-roots)
+
+(function 
+ (name gc-mark-stack-roots)
+ (locals 0)
+ (body (perform (op push-frame))
+       (perform (op reserve-locals) (const 0))
+
+;        ;; begin DEBUG
+;        (assign (reg accum) (label gc-debug-message-2))
+;        (push (reg accum))
+;        (perform (op call) (const mj-system-out-println-string))
+;        (pop (const 1))
+;        (push (sys stack-pointer))
+;        (perform (op call) (const mj-system-out-println))
+;        (pop (const 1))
+;        (assign (reg accum) (op load-array) (const gc-root-stack-limit) (const 0))
+;        (push (reg accum))
+;        (perform (op call) (const mj-system-out-println))
+;        (pop (const 1))
+;        ;; end DEBUG
+
+; We used to use the current stack pointer as the base of the stack, but switched to
+; using gc-stack-root-base as set on entry to malloc so that we would not look through
+; the local variables of the heap/GC code itself when marking roots.
+;       (assign (temp stack-base) (sys stack-pointer))
+       (assign (temp stack-base) (op load-array) (const gc-root-stack-base) (const 0))
+       (assign (temp stack-limit) (op load-array) (const gc-root-stack-limit) (const 0))
+
+       (perform (op call) (const mm-heap-global-base))
+       (perform (op store-array) (const gc-heap-base) (const 0) (reg accum))
+
+       (perform (op call) (const mm-heap-global-limit))
+       (perform (op store-array) (const gc-heap-limit) (const 0) (reg accum))
+
+       (label gc-mark-stack-roots/begin)
+       (assign (temp test) (op less-than) (temp stack-base) (temp stack-limit))
+       (branch-zero (label gc-mark-stack-roots/end) (temp test))
+
+;       ;; begin DEBUG
+;       (perform (op debug-out) (const "checking stack pointer ") (temp stack-base) (const " ")
+;                (result (op load-array) (temp stack-base) (const 0)))
+;       ;; end DEBUG
+
+       (assign (temp ptr) (op load-array) (temp stack-base) (const 0))
+       (push (temp ptr))
+       (perform (op call) (const rtl-gc-mark-pointer))
+       (pop (const 1))
+
+       (assign (temp stack-base) (op add-pointer) (temp stack-base) (const 1))
+       (goto (label gc-mark-stack-roots/begin))
+
+       (label gc-mark-stack-roots/end)
+       (perform (op pop-frame))
+       (return (const 0))))
+

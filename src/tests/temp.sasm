@@ -1,0 +1,20 @@
+;; sasm program to test out temporaries
+(extern cp-mj-system-out-println)
+(entry myfunction)
+(function (name myfunction)
+          (locals 2)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 2))
+
+                (push (const "asdf"))
+                (perform (op call) (const cp-mj-system-out-println))
+
+                (assign (temp temp0) (const 2))
+                (assign (local 0) (op add) (temp temp0) (const 1))
+                (push (local 0))
+                (perform (op call) (const cp-mj-system-out-println))
+                (assign (local 0) (temp temp0))
+                (push (temp temp0))
+                (perform (op call) (const cp-mj-system-out-println))
+                (perform (op pop-frame))
+                (return (const 0))))

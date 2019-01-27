@@ -1,0 +1,17 @@
+;; rtl/gc-defines.sasm
+;; Some constants for GCDW
+
+(define-symconst
+  (gcdw:done-mask #x0000ffff)
+  (gcdw:done-shift 0)
+  (gcdw:offset 1)
+
+  (gcdw:mark-mask #x00010000)
+  (gcdw:mark-shift 16)
+
+  (gcdw:leaf-mask #x00020000)
+  (gcdw:leaf-shift 17)
+
+  (gcdw:array-mask #x80000000)
+  (gcdw:array-shift 31)
+  )

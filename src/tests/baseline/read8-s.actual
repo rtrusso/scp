@@ -1,0 +1,4 @@
+x: (b . c)
+pair? #t
+car - symbol? #t
+cdr - symbol? #t

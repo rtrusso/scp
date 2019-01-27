@@ -1,0 +1,181 @@
+(need regex/nfa)
+(need regex/dfa)
+(need util/list)
+(need util/format)
+
+(define unique-state
+  (let ((n 0))
+    (lambda ()
+      (set! n (+ n 1))
+      n)))
+
+(define :emit-nothing '())
+
+(define (compile-char char)
+  (let ((start (unique-state))
+        (end (unique-state)))
+    (build-nfa start
+               (list end)
+               (list (nfa-rule start char end))
+               :emit-nothing)))
+
+(define (compile-optional-string stuff)
+  (compile-char (list-ref stuff 1)))
+
+(define (nfas-independent? list-of-nfas)
+  (null? (accum-implicit (list-intersecter state=?)
+                         (map nfa.referenced-states list-of-nfas))))
+
+(define (compile-emit-rules-for-new-end end an-nfa)
+  (let ((emitted (nfa.get-emitted-values-for-states
+                  an-nfa
+                  (nfa.final-states an-nfa))))
+    (if (not (null? emitted))
+        (list (cons end emitted))
+        '())))
+
+(define (compile-optional an-nfa)
+  (let ((start (unique-state))
+        (end (unique-state)))
+    (build-nfa start
+               (list end)
+               (append
+                (list (nfa-lambda-rule start end)
+                      (nfa-lambda-rule start (nfa.initial-state an-nfa)))
+                (map (lambda (final)
+                       (nfa-lambda-rule final end))
+                     (nfa.final-states an-nfa))
+                (nfa.rule-set an-nfa))
+               (append (nfa.emit-rule-set an-nfa)
+                       (compile-emit-rules-for-new-end end an-nfa)))))
+
+(define (compile-or list-of-nfas)
+  (cond ((null? list-of-nfas)
+         (error "Need at least one NFA -- COMPILE-OR"))
+        ((= 1 (length list-of-nfas))
+         (car list-of-nfas))
+        (else
+         (if (not (nfas-independent? list-of-nfas))
+             (error "List of nfas have overlapping rules and/or states -- COMPILE-OR"))
+         (let ((start (unique-state)))
+           (build-nfa start
+                      (append-map nfa.final-states list-of-nfas)
+                      (append
+                       (map (lambda (an-nfa)
+                              (nfa-lambda-rule start
+                                               (nfa.initial-state an-nfa)))
+                            list-of-nfas)
+                       (append-map nfa.rule-set list-of-nfas))
+                      (append-map nfa.emit-rule-set list-of-nfas))))))
+
+(define (compile-emit accept-nfa value-to-emit emit-priority)
+;; Build an NFA equivalent to accept-nfa except that all accept states
+;; will emit value value-to-emit.
+  (build-nfa (nfa.initial-state accept-nfa)
+             (nfa.final-states accept-nfa)
+             (nfa.rule-set accept-nfa)
+             ; append the rules to emit the value to each accept state.
+             (append (nfa.emit-rule-set accept-nfa)
+                     (map (lambda (x) (cons x (cons value-to-emit emit-priority)))
+                          (nfa.final-states accept-nfa)))))
+
+(define (compile-append list-of-nfas)
+  (define (append-nfas nfa-a nfa-b)
+    (if (not (null? (nfa.emit-rule-set nfa-a)))
+        (error "emit rules ignored for NFA in compile-append"
+               (nfa.emit-rule-set nfa-a)))
+    (build-nfa (nfa.initial-state nfa-a)
+               (nfa.final-states nfa-b)
+               (append (map (lambda (end)
+                              (nfa-lambda-rule end (nfa.initial-state nfa-b)))
+                            (nfa.final-states nfa-a))
+                       (nfa.rule-set nfa-a)
+                       (nfa.rule-set nfa-b))
+               (append (nfa.emit-rule-set nfa-a)
+                       (nfa.emit-rule-set nfa-b))))
+  (define (iter list-of-nfas)
+    (cond ((null? list-of-nfas)
+           (error "Unable to compile null list of NFAs -- COMPILE-APPEND"))
+          ((null? (cdr list-of-nfas))
+           (car list-of-nfas))
+          (else (append-nfas (car list-of-nfas)
+                             (iter (cdr list-of-nfas))))))
+  (if (and (> (length list-of-nfas) 1)
+           (not (nfas-independent? list-of-nfas)))
+      (error "Unable to compile non-independent NFAs -- COMPILE-APPEND"))
+  (iter list-of-nfas))
+
+(define (compile-* an-nfa)
+  (let ((start (unique-state))
+        (end (unique-state)))
+    (build-nfa start
+               (list start end)
+               (cons (nfa-lambda-rule start (nfa.initial-state an-nfa))
+                     (append (list (nfa-lambda-rule end start))
+                             (map (lambda (orig-end)
+                                    (nfa-lambda-rule orig-end end))
+                                  (nfa.final-states an-nfa))
+                             (nfa.rule-set an-nfa)))
+               (append (nfa.emit-rule-set an-nfa)
+                       (compile-emit-rules-for-new-end end an-nfa)))))
+
+(define (uniqueify-nfa an-nfa)
+  (define (state-renamer)
+    (let ((names '()))
+      (lambda (name)
+        (let ((rename (assoc name names)))
+          (if rename
+              (cdr rename)
+              (let ((rename (unique-state)))
+                (set! names (cons (cons name rename)
+                                  names))
+                rename))))))
+  (define (uniqueify-rule rule renamer)
+    (cond ((nfa-rule.lambda? rule) (nfa-lambda-rule (renamer (nfa-rule.from rule))
+                                                    (renamer (nfa-rule.to rule))))
+          (else (nfa-rule (renamer (nfa-rule.from rule))
+                          (nfa-rule.value rule)
+                          (renamer (nfa-rule.to rule))))))
+  (let ((rename (state-renamer)))
+    (build-nfa (rename (nfa.initial-state an-nfa))
+               (map rename (nfa.final-states an-nfa))
+               (map (lambda (rule) (uniqueify-rule rule rename))
+                    (nfa.rule-set an-nfa))
+               (map (lambda (rule) (cons (rename (car rule))
+                                         (cdr rule)))
+                    (nfa.emit-rule-set an-nfa)))))
+
+(define (compile-+ an-nfa)
+  (compile-append (list (uniqueify-nfa an-nfa) (compile-* an-nfa))))
+
+(define (compile-string s)
+  (if (not (string? s))
+      (error "Unable to compile object -- COMPILE-STRING" s))
+  (compile-append (map compile-char (string->list s))))
+
+(define (println string . args)
+  (display (apply format (cons string args)))
+  (newline))
+
+(define (display-nfa an-nfa)
+  (println "Start: ~" (nfa.initial-state an-nfa))
+  (println "End:   ~" (nfa.final-states an-nfa))
+  (for-each (lambda (rule)
+              (if (nfa-rule.lambda? rule)
+                  (println "Lambda: ~   ~" (nfa-rule.from rule) (nfa-rule.to rule))
+                  (println "Value:  ~   ~   ~" (nfa-rule.from rule) (nfa-rule.to rule)
+                           (nfa-rule.value rule))))
+            (nfa.rule-set an-nfa)))
+
+(define (test-nfa n string)
+  (nfa.reset! n)
+  (for-each (lambda (char)
+              (write
+               (list 'char: char 
+                     'states: (nfa.input! n char)
+                     'failed?: (nfa.failed? n)
+                     'done?: (nfa.done? n)))
+              (newline))
+            (string->list string))
+  (display "NFA Accepts? ") (display (nfa.done? n))
+  (newline))

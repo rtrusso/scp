@@ -1,0 +1,466 @@
+;; heap.sasm
+;; malloc and free, based on a paged-heap design and implemented in SASM
+
+(export mm-malloc)
+(export mm-free)
+(export mm-fixed-malloc)
+(export mm-heap-global-base)
+(export mm-heap-global-limit)
+(export mm-heap-assoc)
+(export mm-heap-sweep-area)
+(export root-heap-pointer)
+
+(export c-mm-malloc)
+(export c-mm-free)
+(export c-mm-heap-add-area)
+(export c-mm-heap-add-fixed-area)
+
+(global root-heap-pointer (const 0))
+(global root-fixed-heap-pointer (const 0))
+
+(extern mm-var-heap-add-area)
+(extern mm-var-heap-area-free)
+(extern mm-var-heap-area-malloc)
+(extern mm-var-heap-sweep-area)
+(extern cp-mm-fixed-heap-area-init)
+(extern cp-mm-fixed-heap-area-malloc)
+(extern cp-mm-fixed-heap-area-free)
+(extern cp-mm-fixed-heap-area-sweep)
+
+
+(export mm-heap-insert-area-into-list)
+(export mm-heap-add-area)
+(export mm-heap-add-fixed-area)
+(export mm-heap-area-malloc)
+(export mm-heap-area-free)
+
+; (global heap-debug-message-1 (const "free pointer, searching heap:"))
+
+(include "mm-param.sasm")
+
+(function (name c-mm-malloc)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (save (reg operand))
+                (save (reg index))
+                (save (reg link))
+                (save (reg pointer))
+
+                (push (arg 0))
+                (perform (op call) (const mm-malloc))
+
+                (restore (reg pointer))
+                (restore (reg link))
+                (restore (reg index))
+                (restore (reg operand))
+
+                (perform (op pop-frame))
+                (return)))
+
+(function (name c-mm-free)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (save (reg operand))
+                (save (reg index))
+                (save (reg link))
+                (save (reg pointer))
+
+                (push (arg 0))
+                (perform (op call) (const mm-free))
+
+                (restore (reg pointer))
+                (restore (reg link))
+                (restore (reg index))
+                (restore (reg operand))
+
+                (perform (op pop-frame))
+                (return)))
+
+(function (name c-mm-heap-add-area)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (save (reg operand))
+                (save (reg index))
+                (save (reg link))
+                (save (reg pointer))
+
+                (push (arg 1))
+                (push (arg 0))
+                (perform (op call) (const mm-heap-add-area))
+
+                (restore (reg pointer))
+                (restore (reg link))
+                (restore (reg index))
+                (restore (reg operand))
+
+                (perform (op pop-frame))
+                (return)))
+
+(function (name c-mm-heap-add-fixed-area)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (save (reg operand))
+                (save (reg index))
+                (save (reg link))
+                (save (reg pointer))
+
+                (push (arg 2))
+                (push (arg 1))
+                (push (arg 0))
+                (perform (op call) (const mm-heap-add-fixed-area))
+
+                (restore (reg pointer))
+                (restore (reg link))
+                (restore (reg index))
+                (restore (reg operand))
+
+                (perform (op pop-frame))
+                (return)))
+
+(function (name mm-heap-insert-area-into-list)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (temp heap) (arg 0))
+                (assign (temp tail) (op load-array) (const root-heap-pointer) (const 0))
+                (perform (op store-array) (temp heap) (symconst heap:next) (temp tail))
+                (perform (op store-array) (const root-heap-pointer) (const 0) (temp heap))
+
+                (assign (reg accum) (arg 0))
+                (perform (op pop-frame))
+                (return (const 1))))
+
+(function (name mm-heap-add-area)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (push (arg 1))
+                (push (arg 0))
+                (perform (op call) (const mm-var-heap-add-area))
+
+                (assign (temp heap) (reg accum))
+                (push (temp heap))
+                (perform (op call) (const mm-heap-insert-area-into-list))
+
+                (assign (reg accum) (temp heap))
+                (perform (op pop-frame))
+                (return (const 2))))
+
+(function (name mm-heap-add-fixed-area)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (push (arg 2))
+                (push (arg 1))
+                (push (arg 0))
+                (perform (op call) (const cp-mm-fixed-heap-area-init))
+
+                (assign (temp heap) (arg 0))
+                (assign (temp tail) (op load-array) (const root-heap-pointer) (const 0))
+                (perform (op store-array) (temp heap) (symconst heap:next) (temp tail))
+                (perform (op store-array) (const root-heap-pointer) (const 0) (temp heap))
+
+                (assign (temp heap) (arg 0))
+                (assign (temp tail) (op load-array) (const root-fixed-heap-pointer) (const 0))
+                (perform (op store-array) (temp heap) (symconst fixed-heap:next-fixed-heap) (temp tail))
+                (perform (op store-array) (const root-fixed-heap-pointer) (const 0) (temp heap))
+                (perform (op pop-frame))
+                (return (const 3))))
+
+(function
+ (name mm-heap-global-base)
+ (locals 0)
+ (body (perform (op push-frame))
+       (perform (op reserve-locals) (const 1))
+
+       (assign (temp base) (const 0))
+       (assign (temp heap) (op load-array) (const root-heap-pointer) (const 0))
+
+       (branch-zero (label mm-heap-global-base/end) (temp heap))
+       (assign (temp base) (op load-array) (temp heap) (symconst heap:base))
+       (assign (temp heap) (op load-array) (temp heap) (symconst heap:next))
+
+       (label mm-heap-global-base/start)
+       (branch-zero (label mm-heap-global-base/end) (temp heap))
+       (assign (temp heap-base) (op load-array) (temp heap) (symconst heap:base))
+       (assign (temp test) (op less-than) (temp heap-base) (temp base))
+       (branch-zero (label mm-heap-global-base/next) (temp test))
+       (assign (temp base) (temp heap-base))
+       (label mm-heap-global-base/next)
+       (assign (temp heap) (op load-array) (temp heap) (symconst heap:next))
+       (goto (label mm-heap-global-base/start))
+
+       (label mm-heap-global-base/end)
+       (assign (reg accum) (temp base))
+       (perform (op pop-frame))
+       (return (const 0))))
+
+(function
+ (name mm-heap-global-limit)
+ (locals 0)
+ (body (perform (op push-frame))
+       (perform (op reserve-locals) (const 1))
+
+       (assign (temp limit) (const 0))
+       (assign (temp heap) (op load-array) (const root-heap-pointer) (const 0))
+
+       (label mm-heap-global-limit/start)
+       (branch-zero (label mm-heap-global-limit/end) (temp heap))
+       (assign (temp heap-limit) (op load-array) (temp heap) (symconst heap:limit))
+
+       (assign (temp test) (op less-than) (temp limit) (temp heap-limit))
+       (branch-zero (label mm-heap-global-limit/next) (temp test))
+       (assign (temp limit) (temp heap-limit))
+       (label mm-heap-global-limit/next)
+       (assign (temp heap) (op load-array) (temp heap) (symconst heap:next))
+       (goto (label mm-heap-global-limit/start))
+
+       (label mm-heap-global-limit/end)
+       (assign (reg accum) (temp limit))
+       (perform (op pop-frame))
+       (return (const 0))))
+
+(function (name mm-heap-assoc)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (temp result-heap) (const 0))
+                (assign (temp heap) (op load-array) (const root-heap-pointer) (const 0))
+
+                (label mm-heap-assoc/start)
+                (branch-zero (label mm-heap-assoc/end) (temp heap))
+                (assign (temp base) (op load-array) (temp heap) (symconst heap:base))
+                (assign (temp limit) (op load-array) (temp heap) (symconst heap:limit))
+
+                (assign (temp test) (op less-than-or-equal) (temp base) (arg 0))
+                (branch-zero (label mm-heap-assoc/next) (temp test))
+
+                (assign (temp test) (op less-than) (arg 0) (temp limit))
+                (branch-zero (label mm-heap-assoc/next) (temp test))
+
+                (assign (temp result-heap) (temp heap))
+                (goto (label mm-heap-assoc/end))
+
+                (label mm-heap-assoc/next)
+                (assign (temp heap) (op load-array) (temp heap) (symconst heap:next))
+                (goto (label mm-heap-assoc/start))
+
+                (label mm-heap-assoc/end)
+                (assign (reg accum) (temp result-heap))
+                (perform (op pop-frame))
+                (return (const 1))))
+
+(function (name mm-malloc)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (temp result) (const 0))
+                (assign (temp heap) (op load-array) (const root-heap-pointer) (const 0))
+
+                (label mm-malloc/start)
+                (branch-zero (label mm-malloc/end) (temp heap))
+
+                (push (arg 0))
+                (push (temp heap))
+                (perform (op call) (const mm-heap-area-malloc))
+                (assign (temp result) (reg accum))
+                (branch-nonzero (label mm-malloc/end) (temp result))
+
+                (assign (temp heap) (op load-array) (temp heap) (symconst heap:next))
+                (goto (label mm-malloc/start))
+
+                (label mm-malloc/end)
+                (assign (reg accum) (temp result))
+                (perform (op pop-frame))
+                (return (const 1))))
+
+(function (name mm-fixed-malloc)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (temp result) (const 0))
+                (assign (temp heap) (op load-array) (const root-fixed-heap-pointer) (const 0))
+
+                (label mm-fixed-malloc/start)
+                (branch-zero (label mm-fixed-malloc/end) (temp heap))
+
+                (push (arg 0))
+                (push (temp heap))
+                (perform (op call) (const mm-heap-area-malloc))
+                (assign (temp result) (reg accum))
+                (branch-nonzero (label mm-fixed-malloc/end) (temp result))
+
+                (assign (temp heap) (op load-array) (temp heap) (symconst fixed-heap:next-fixed-heap))
+                (goto (label mm-fixed-malloc/start))
+
+                (label mm-fixed-malloc/end)
+                (assign (reg accum) (temp result))
+                (perform (op pop-frame))
+                (return (const 1))))
+
+(function (name mm-heap-area-malloc)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                ;; check to see what kind of heap this is.
+                (assign (temp type) (op load-array) (arg 0) (symconst heap:type))
+                (assign (temp test) (op equal-to) (temp type) (symconst heap-type:fixed-alloc))
+                (branch-nonzero (label mm-heap-area-malloc/fixed) (temp test))
+
+                ;; variable-allocation heap.
+                (push (arg 1))
+                (push (arg 0))
+                (perform (op call) (const mm-var-heap-area-malloc))
+                (goto (label mm-heap-area-malloc/done))
+
+                (label mm-heap-area-malloc/fixed)
+                ;; fixed-heap.  Check to make sure the chunk size is big enough.
+                (assign (temp block) (op load-array) (arg 0) (symconst heap:words-per-page))
+                (assign (temp test) (op less-than-or-equal) (arg 1) (temp block))
+                (branch-zero (label mm-heap-area-malloc/fail) (temp test))
+
+                ;; it's big enough.  call malloc and the we're done.
+                (push (arg 0))
+                (perform (op call) (const cp-mm-fixed-heap-area-malloc))
+                (goto (label mm-heap-area-malloc/done))
+
+                ;; the fixed heap's chunk size is not big enough.
+                (label mm-heap-area-malloc/fail)
+                (assign (reg accum) (const 0))
+
+                ;; return
+                (label mm-heap-area-malloc/done)
+                (perform (op pop-frame))
+                (return (const 2))))
+
+(function (name mm-free)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (temp heap) (op load-array) (const root-heap-pointer) (const 0))
+
+                (label mm-free/start)
+                (assign (temp base) (op load-array) (temp heap) (symconst heap:base))
+                (assign (temp limit) (op add) (temp base) (symconst heap:limit))
+
+;                 ;; begin DEBUG
+;                 (assign (reg accum) (label heap-debug-message-1))
+;                 (push (reg accum))
+;                 (perform (op call) (const mj-system-out-println-string))
+;                 (pop (const 1))
+;                 (push (arg 0))
+;                 (perform (op call) (const mj-system-out-println))
+;                 (pop (const 1))
+;                 (push (temp base))
+;                 (perform (op call) (const mj-system-out-println))
+;                 (pop (const 1))
+;                 (push (temp limit))
+;                 (perform (op call) (const mj-system-out-println))
+;                 (pop (const 1))
+;                 ;; end DEBUG
+
+;                ;; begin DEBUG
+;                (push (const "free pointer, searching heap:"))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                (push (arg 0))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                (push (temp base))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                (push (temp pages))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                (push (temp limit))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                ;; end DEBUG
+
+                (assign (temp test) (op less-than-or-equal) (temp base) (arg 0))
+                (branch-zero (label mm-free/next) (temp test))
+
+                (assign (temp test) (op less-than) (arg 0) (temp limit))
+                (branch-zero (label mm-free/next) (temp test))
+
+;                ;; begin DEBUG
+;                (push (const "free pointer, *** found heap ***"))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                ;; end DEBUG
+
+                (push (arg 0))
+                (push (temp heap))
+                (perform (op call) (const mm-heap-area-free))
+                (goto (label mm-free/end))
+
+                (label mm-free/next)
+                (assign (temp heap) (op load-array) (temp heap) (symconst heap:next))
+                (goto (label mm-free/start))
+
+                (label mm-free/end)
+                (perform (op pop-frame))
+                (return (const 1))))
+
+;; void mm_heap_area_free( heap* h, void* ptr );
+(function (name mm-heap-area-free)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 1))
+
+                ;; check to see if this is a fixed or variable allocation heap.
+                (assign (temp type) (op load-array) (arg 0) (symconst heap:type))
+                (assign (temp test) (op equal-to) (temp type) (symconst heap-type:fixed-alloc))
+                (branch-nonzero (label mm-heap-area-free/fixed) (temp test))
+
+                ;; it's variable. call free.
+                (push (arg 1))
+                (push (arg 0))
+                (perform (op call) (const mm-var-heap-area-free))
+                (goto (label mm-heap-area-free/done))
+
+                ;; it's fixed.  call free.
+                (label mm-heap-area-free/fixed)
+                (push (arg 1))
+                (push (arg 0))
+                (perform (op call) (const cp-mm-fixed-heap-area-free))
+
+                ;; return
+                (label mm-heap-area-free/done)
+                (perform (op pop-frame))
+                (return (const 2))))
+
+(function (name mm-heap-sweep-area)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 1))
+
+                ;; check to see if this is a fixed or variable allocation heap.
+                (assign (temp type) (op load-array) (arg 0) (symconst heap:type))
+                (assign (temp test) (op equal-to) (temp type) (symconst heap-type:fixed-alloc))
+                (branch-nonzero (label mm-heap-sweep-area/fixed) (temp test))
+
+                ;; variable.  call sweep.
+                (push (arg 0))
+                (perform (op call) (const mm-var-heap-sweep-area))
+                (goto (label mm-heap-sweep-area/done))
+
+                ;; fixed.  call sweep.
+                (label mm-heap-sweep-area/fixed)
+                (push (arg 0))
+                (perform (op call) (const cp-mm-fixed-heap-area-sweep))
+
+                ;; return.
+                (label mm-heap-sweep-area/done)
+                (perform (op pop-frame))
+                (return (const 1))))

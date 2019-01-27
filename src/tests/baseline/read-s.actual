@@ -1,0 +1,29 @@
+#t
+read2 let*
+read-list
+before rl-peek-char
+1after peek-char-
+"
+2nd peek-char
+2ndafter peek-char============
+"
+r2
+#f
+read-list else
+read2 let*
+read-string
+read-string
+read-string
+read-string
+read-string
+read-list
+before rl-peek-char
+1after peek-char-
+)
+2nd peek-char
+2ndafter peek-char============
+)
+r2
+#t
+read close paren
+(asdf)

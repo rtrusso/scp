@@ -1,0 +1,31 @@
+#f
+
+((export-symbol . foo))
+((replace-stuff foo))
+
+((rest (const 1)) (global-symbol . foo))
+(global-stuff the-symbol-is: foo the-rest-is: ((const 1)))
+
+((rest (const 1) (label x)) (global-symbol . foo))
+(global-stuff the-symbol-is: foo the-rest-is: ((const 1) (label x)))
+
+#f
+
+((symbol-list 4 5 6) (global-symbol . foo))
+(global-stuff the-symbol-is: foo the-rest-is: (4 5 6))
+
+#f
+
+((symbol-list 4 5 6) (global-symbol . foo))
+(global-stuff the-symbol-is: foo the-rest-is: (4 5 6))
+
+#f
+
+((symbol-list 5 6 7) (global-symbol . foo))
+(global-stuff the-symbol-is: foo the-rest-is: (5 6 7))
+
+#f
+
+((symbol-list 9 10 11) (global-symbol . foo))
+(global-stuff the-symbol-is: foo the-rest-is: (9 10 11))
+

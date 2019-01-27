@@ -1,0 +1,495 @@
+;; rtl/heapvar.sasm
+;; Variable-sized allocation heap
+
+(include "mm-param.sasm")
+(include "gc-defines.sasm")
+
+(export mm-var-heap-add-area)
+(export mm-var-heap-area-free)
+(export mm-var-heap-area-malloc)
+(export mm-var-heap-sweep-area)
+
+(export mm-var-heap-page-empty?)
+(export mm-var-heap-claim-page)
+(export mm-var-heap-area-release-page)
+(export mm-var-heap-page-range-empty?)
+(export mm-var-heap-claim-page-range)
+
+(define-symconst
+  (var-heap/words-per-page 32)
+  (var-heap/shift-words-per-page 5)
+  (var-heap/mask-words-per-page 31))
+
+
+(function 
+ (name mm-var-heap-add-area)
+ (locals 1)
+ (body (perform (op push-frame))
+       (perform (op reserve-locals) (const 1))
+
+       ;; Compute heap parameters:
+       ;;
+       ;; bitmap-pages      - number of pages described by the heap's allocation bitmap
+       ;; bitmap-size-words - size of the bitmap in words
+       ;; pages             - number of actual pages left over for use
+       ;; total-words       - total number of words available in the heap
+
+       (assign (temp bitmap-pages:leftover) (op sub) (arg 1) (symconst sizeof:var-heap))
+       (assign (temp bitmap-pages:shift) (op bit-rshift) (temp bitmap-pages:leftover) (symconst var-heap/shift-words-per-page))
+       (assign (temp bitmap-pages) (op add) (temp bitmap-pages:shift) (const 1))
+
+       (assign (temp bitmap-size-words)
+               (op bit-rshift)
+               (temp bitmap-pages)
+               (symconst shift-bits-per-word))
+       (assign (temp bitmap-size-words) (op add) (temp bitmap-size-words) (const 1))
+
+       (assign (temp pages:leftover) (op sub) (arg 1) (symconst sizeof:var-heap))
+       (assign (temp pages:diff) (op sub) (temp pages:leftover) (temp bitmap-size-words))
+       (assign (temp pages) (op bit-rshift) (temp pages:diff) (symconst var-heap/shift-words-per-page))
+
+       (assign (temp total-words)
+               (op mul)
+               (temp pages)
+               (symconst var-heap/words-per-page))
+       (assign (temp bitmap-pointer)
+               (op add-pointer)
+               (arg 0)
+               (symconst sizeof:var-heap))
+
+       (assign (temp base-pointer:shift) (op bit-lshift) (temp bitmap-size-words) (symconst shift-cells-per-word))
+       (assign (temp base-pointer) (op add) (temp bitmap-pointer) (temp base-pointer:shift))
+       (assign (temp limit-pointer) (op bit-lshift) (temp total-words) (symconst shift-cells-per-word))
+       (assign (temp limit-pointer) (op add) (temp limit-pointer) (temp base-pointer))
+
+;       (push (temp bitmap-pages:leftover))
+;       (perform (op call) (const cp-mj-system-out-println))
+;       (push (temp bitmap-pages:shift))
+;       (perform (op call) (const cp-mj-system-out-println))
+;       (push (temp bitmap-pages))
+;       (perform (op call) (const cp-mj-system-out-println))
+;       (push (temp bitmap-size-words))
+;       (perform (op call) (const cp-mj-system-out-println))
+;       (push (temp pages:leftover))
+;       (perform (op call) (const cp-mj-system-out-println))
+;       (push (temp pages:diff))
+;       (perform (op call) (const cp-mj-system-out-println))
+;       (push (temp pages))
+;       (perform (op call) (const cp-mj-system-out-println))
+;       (push (temp total-words))
+;       (perform (op call) (const cp-mj-system-out-println))
+;       (push (temp bitmap-pointer))
+;       (perform (op call) (const cp-mj-system-out-println))
+;       (push (temp base-pointer:shift))
+;       (perform (op call) (const cp-mj-system-out-println))
+;       (push (temp base-pointer))
+;       (perform (op call) (const cp-mj-system-out-println))
+;       (push (temp limit-pointer))
+;       (perform (op call) (const cp-mj-system-out-println))
+
+       ;; Fill in the heap data structure, link it into the heap
+
+       (perform (op store-array) (arg 0) (symconst heap:base) (temp base-pointer))
+       (perform (op store-array) (arg 0) (symconst heap:limit) (temp limit-pointer))
+       (perform (op store-array) (arg 0) (symconst heap:object-offset) (const 1))
+       (perform (op store-array) (arg 0) (symconst heap:words-per-page) (symconst var-heap/words-per-page))
+       (perform (op store-array) (arg 0) (symconst heap:shift-words-per-page) (symconst var-heap/shift-words-per-page))
+       (perform (op store-array) (arg 0) (symconst heap:mask-words-per-page) (symconst var-heap/mask-words-per-page))
+       (perform (op store-array) (arg 0) (symconst heap:next) (const 0))
+       (perform (op store-array) (arg 0) (symconst heap:type) (symconst heap-type:var-alloc))
+       (perform (op store-array) (arg 0) (symconst var-heap:hope) (const 0))
+       (perform (op store-array) (arg 0) (symconst var-heap:bitmap) (temp bitmap-pointer))
+       (perform (op store-array) (arg 0) (symconst var-heap:pages) (temp pages))
+
+       (assign (temp iter) (temp bitmap-pointer))
+       (label mm-var-heap-add-area/begin)
+       (assign (temp test) (op less-than) (temp iter) (temp base-pointer))
+       (branch-zero (label mm-var-heap-add-area/end) (temp test))
+
+       (perform (op store-array) (temp iter) (const 0) (const 0))
+       (assign (temp iter) (op add-pointer) (temp iter) (const 1))
+       (goto (label mm-var-heap-add-area/begin))
+
+       (label mm-var-heap-add-area/end)
+
+;       (perform (op store-array) (const 0) (const 100000000) (const 0))
+       (assign (reg accum) (arg 0))
+
+       (perform (op pop-frame))
+       (return (const 2))))
+
+;; int mm_var_heap_page_empty_Q( heap *h, int page )
+(function (name mm-var-heap-page-empty?)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (temp byte-idx) (op bit-rshift) (arg 1) (symconst shift-bits-per-word))
+                (assign (temp bit-idx) (op bit-and) (arg 1) (symconst mask-bits-per-word))
+                (assign (temp mask) (op bit-lshift) (const 1) (temp bit-idx))
+
+                (assign (temp bitmap) (op load-array) (arg 0) (symconst var-heap:bitmap))
+                (assign (temp word) (op load-array) (temp bitmap) (temp byte-idx))
+                (assign (reg accum) (op bit-and) (temp word) (temp mask))
+
+                (perform (op pop-frame))
+                (return (const 2))))
+
+;; int mm_var_heap_claim_page( heap *h, int page )
+(function (name mm-var-heap-claim-page)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (temp byte-idx) (op bit-rshift) (arg 1) (symconst shift-bits-per-word))
+                (assign (temp bit-idx) (op bit-and) (arg 1) (symconst mask-bits-per-word))
+                (assign (temp mask) (op bit-lshift) (const 1) (temp bit-idx))
+
+                (assign (temp bitmap) (op load-array) (arg 0) (symconst var-heap:bitmap))
+                (assign (temp word) (op load-array) (temp bitmap) (temp byte-idx))
+                (assign (reg accum) (op bit-or) (temp word) (temp mask))
+                (perform (op store-array) (temp bitmap) (temp byte-idx) (reg accum))
+
+                (perform (op pop-frame))
+                (return (const 2))))
+
+(function (name mm-var-heap-area-release-page)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+;                ;; begin DEBUG
+;                (push (const "heap-release-page"))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                (push (arg 1))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                ;; end DEBUG
+
+                (assign (temp byte-idx) (op bit-rshift) (arg 1) (symconst shift-bits-per-word))
+                (assign (temp bit-idx) (op bit-and) (arg 1) (symconst mask-bits-per-word))
+                (assign (temp mask) (op bit-lshift) (const 1) (temp bit-idx))
+
+                (assign (temp bitmap) (op load-array) (arg 0) (symconst var-heap:bitmap))
+                (assign (temp word) (op load-array) (temp bitmap) (temp byte-idx))
+                (assign (temp mask) (op bit-not) (temp mask))
+                (assign (temp word) (op bit-and) (temp word) (temp mask))
+                (perform (op store-array) (temp bitmap) (temp byte-idx) (temp word))
+
+                (perform (op pop-frame))
+                (return (const 2))))
+
+;; int mm_var_heap_page_rage_empty_Q( heap *h, int page, int count )
+(function (name mm-var-heap-page-range-empty?) ;; returns int
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const  0))
+
+                (assign (temp n-pages) (op load-array) (arg 0) (symconst var-heap:pages))
+                (assign (temp limit) (op add) (arg 1) (arg 2))
+                (assign (temp test) (op less-than-or-equal) (temp limit) (temp n-pages))
+                (branch-zero (label mm-var-heap-page-range-empty?/fail) (temp test))
+
+                (assign (temp idx) (arg 1))
+                (label mm-var-heap-page-range-empty?/start)
+
+                (assign (temp test) (op less-than) (temp idx) (temp limit))
+                (branch-zero (label mm-var-heap-page-range-empty?/succeed) (temp test))
+
+                (push (temp idx))
+                (push (arg 0))
+                (perform (op call) (const mm-var-heap-page-empty?))
+                (branch-nonzero (label mm-var-heap-page-range-empty?/fail) (reg accum))
+
+                (assign (temp idx) (op add) (temp idx) (const 1))
+                (goto (label mm-var-heap-page-range-empty?/start))
+
+                (label mm-var-heap-page-range-empty?/succeed)
+                (assign (reg accum) (const 1))
+                (goto (label mm-var-heap-page-range-empty?/done))
+                (label mm-var-heap-page-range-empty?/fail)
+                (assign (reg accum) (const 0))
+                (label mm-var-heap-page-range-empty?/done)
+                (perform (op pop-frame))
+                (return (const 3))))
+
+;; int mm_var_heap_claim_page_range( heap *h, int page, int count )
+(function (name mm-var-heap-claim-page-range)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (temp limit) (op add) (arg 1) (arg 2))
+                (assign (temp idx) (arg 1))
+
+                (label mm-var-heap-claim-page-range/start)
+                (assign (temp test) (op less-than) (temp idx) (temp limit))
+                (branch-zero (label mm-var-heap-claim-page-range/done) (temp test))
+
+                (push (temp idx))
+                (push (arg 0))
+                (perform (op call) (const mm-var-heap-claim-page))
+
+                (assign (temp idx) (op add) (temp idx) (const 1))
+                (goto (label mm-var-heap-claim-page-range/start))
+
+                (label mm-var-heap-claim-page-range/done)
+                (perform (op pop-frame))
+                (return (const 3))))
+
+(function (name mm-var-heap-area-free)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (temp page-pointer) (op sub-pointer) (arg 1) (const 1))
+                (assign (temp base) (op load-array) (arg 0) (symconst heap:base))
+                (assign (temp cell-offset) (op sub) (temp page-pointer) (temp base))
+                (assign (temp word-offset) (op bit-rshift) (temp cell-offset) (symconst shift-cells-per-word))
+                (assign (temp page-index) (op bit-rshift) (temp word-offset) (symconst var-heap/shift-words-per-page))
+                (assign (temp pages) (op load-array) (temp page-pointer) (const 0))
+                (assign (temp page-limit) (op add) (temp page-index) (temp pages))
+
+;                ;; begin DEBUG
+;                (push (const "heap-area-free"))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                (push (arg 1))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                (push (temp page-pointer))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                (push (temp word-offset))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                (push (temp page-index))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                (push (temp pages))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                (push (temp page-limit))
+;                (perform (op call) (const cp-mj-system-out-println))
+;                ;; end DEBUG
+
+                (assign (temp idx) (temp page-index))
+                (label mm-var-heap-area-free/start)
+                (assign (temp test) (op less-than) (temp idx) (temp page-limit))
+                (branch-zero (label mm-var-heap-area-free/end) (temp test))
+
+                (push (temp idx))
+                (push (arg 0))
+                (perform (op call) (const mm-var-heap-area-release-page))
+
+                (assign (temp idx) (op add) (temp idx) (const 1))
+                (goto (label mm-var-heap-area-free/start))
+
+                (label mm-var-heap-area-free/end)
+                (perform (op pop-frame))
+                (return (const 2))))
+
+(function (name mm-var-heap-area-malloc)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                ;; final-pointer is where the final result of the malloc
+                ;; operation is stored
+                (assign (temp final-pointer) (const 0))
+
+                ;; initialize some other local variables
+                ;;
+                ;;  requested - input, # of words requested by user.
+                ;;  Incremented to allow for heap control word.
+                ;;
+                ;;  pages - # of pages of the heap required to serve the request
+                ;;
+                ;;  test - temporary used to store the result of bitmask operations
+                ;;
+                ;;  start - which page to start the search on
+                ;;
+                ;;  page - current page for this iteration through the search
+                ;;
+                ;;  n-pages - total # of pages available in the heap
+                ;;
+                ;;  count - a count of the number of iterations we have completed
+                ;;  in the search
+                ;;
+                (assign (temp requested) (op add) (arg 1) (const 1))
+                (assign (temp pages) (op bit-rshift) (temp requested) (symconst var-heap/shift-words-per-page))
+                (assign (temp test) (op bit-and) (temp requested) (symconst var-heap/mask-words-per-page))
+                (branch-zero (label mm-var-heap-area-malloc/nopad) (temp test))
+                (assign (temp pages) (op add) (temp pages) (const 1))
+                (label mm-var-heap-area-malloc/nopad)
+
+                (assign (temp start) (op load-array) (arg 0) (symconst var-heap:hope))
+                (assign (temp page) (temp start))
+                (assign (temp n-pages) (op load-array) (arg 0) (symconst var-heap:pages))
+                (assign (temp count) (const 0))
+
+                ;; this is the start of the search loop
+                (label mm-var-heap-area-malloc/start)
+
+                ;; if we have iterated over the whole heap (n-pages iterations)
+                ;; then we've run out of possibilites; fail the request
+                (assign (temp test) (op less-than) (temp count) (temp n-pages))
+                (branch-zero (label mm-var-heap-area-malloc/end) (temp test))
+
+                ;; pages -1
+                ;; page  -2
+                ;; n-pages -3
+                ;; count -4
+                ;; final-pointer -5
+
+                ;; check to see if the current page we are looking
+                ;; at is empty and can hold the requested buffer
+                (push (temp pages)) ;; -1
+                (push (temp page))  ;; -2
+                (push (arg 0))      ;; 2
+                (perform (op call) (const mm-var-heap-page-range-empty?))
+                (branch-zero (label mm-var-heap-area-malloc/try-hope) (reg accum))
+
+                ;; it can!  claim that page range
+                (push (temp pages))
+                (push (temp page))
+                (push (arg 0))
+                (perform (op call) (const mm-var-heap-claim-page-range))
+
+                ;; Fill in the size at the head of the allocated buffer.  This is 
+                ;; for the use of the heap code.  Later when this pointer is free()d
+                ;; we will need to know the size of the allocation.
+                (assign (reg accum) (op load-array) (arg 0) (symconst heap:base))
+                (assign (temp word-offset) (op bit-lshift) (temp page) (symconst var-heap/shift-words-per-page))
+                (perform (op store-array) (reg accum) (temp word-offset) (temp pages))
+
+                ;; assign final-pointer to the page we just claimed.
+                ;; final-pointer also needs to be adjusted to not
+                ;; include the heap control word we added to the alloc
+                ;; size.
+                (assign (temp final-pointer:shift) (op bit-lshift) (temp word-offset) (symconst shift-cells-per-word))
+                (assign (temp final-pointer) (op add) (reg accum) (temp final-pointer:shift))
+                (assign (temp final-pointer) (op add-pointer) (temp final-pointer) (const 1))
+;                (assign (temp test-final-pointer) (op less-than) (temp final-pointer) (const 65536))
+;                (branch-zero (label mm-var-heap-area-malloc/ptrok) (temp test-final-pointer))
+;                (perform (op store-array) (const 0) (const 100000000) (const 0))
+;                (label mm-var-heap-area-malloc/ptrok)
+
+                ;; Set up the hope index if possible.  If the heap
+                ;; area adjacent to the one we just claimed is empty,
+                ;; that is our next hope range.
+                (assign (temp page) (op add) (temp page) (temp pages))
+
+                ;; if page + pages > n-pages, wrap around
+                (assign (temp test) (op less-than) (temp page) (temp n-pages))
+                (branch-nonzero (label mm-var-heap-area-malloc/nosubtract) (temp test))
+                (assign (temp page) (op sub) (temp page) (temp n-pages))
+                (label mm-var-heap-area-malloc/nosubtract)
+
+                ;; If page is empty, then set that as the new hope
+                ;; index.  After that, we're done!  Bail out to the
+                ;; end of the function.
+                (push (temp page))
+                (push (arg 0))
+                (perform (op call) (const mm-var-heap-page-empty?))
+                (branch-zero (label mm-var-heap-area-malloc/end) (reg accum))
+                (perform (op store-array) (arg 0) (symconst var-heap:hope) (temp page))
+                (goto (label mm-var-heap-area-malloc/end))
+
+                (label mm-var-heap-area-malloc/try-hope)
+                ;; If this page we just tested for a free range
+                ;; happens to be empty (even though it is not big
+                ;; enough), set it up as the next hope index.
+                (push (temp page))
+                (push (arg 0))
+                (perform (op call) (const mm-var-heap-page-empty?))
+                (branch-nonzero (label mm-var-heap-area-malloc/skip) (reg accum))
+
+                ;; this page is empty, so set it as hope and increment
+                (perform (op store-array) (arg 0) (symconst var-heap:hope) (temp page))
+
+                ;; IMPORTANT: this algorithm assumes that it is always
+                ;; looking at the start of a free or used area.  Thus,
+                ;; we cannot just jump forward by 'pages', because we
+                ;; might land in the middle of a used region.
+                (label mm-var-heap-area-malloc/find-start-of-next-used-page)
+                (assign (temp page) (op add) (temp page) (const 1))
+                (assign (temp test) (op less-than) (temp page) (temp n-pages))
+                (branch-zero (label mm-var-heap-area-malloc/next) (temp test))
+                (push (temp page))
+                (push (arg 0))
+                (perform (op call) (const mm-var-heap-page-empty?))
+                (branch-zero (label mm-var-heap-area-malloc/find-start-of-next-used-page) (reg accum))
+
+                (label mm-var-heap-area-malloc/skip)
+                ;; this page is not empty, so skip ahead by the number
+                ;; of used pages
+                (assign (reg accum) (op load-array) (arg 0) (symconst heap:base))
+                (assign (temp word-offset-2) (op bit-lshift) (temp page) (symconst var-heap/shift-words-per-page))
+                (assign (reg accum) (op load-array) (reg accum) (temp word-offset-2))
+                (assign (temp page) (op add) (temp page) (reg accum))
+
+                (label mm-var-heap-area-malloc/next)
+                ;; each iteration, count=count+1.
+                (assign (temp count) (op add) (temp count) (const 1))
+                ;; test page < n-pages.  If not, wrap around
+                (assign (temp test) (op less-than) (temp page) (temp n-pages))
+                (branch-nonzero (label mm-var-heap-area-malloc/start) (temp test))
+                (assign (temp page) (const 0))
+                (goto (label mm-var-heap-area-malloc/start))
+
+                (label mm-var-heap-area-malloc/end)
+                (assign (reg accum) (temp final-pointer))
+                (perform (op pop-frame))
+                (return (const 2))))
+
+(function
+ (name mm-var-heap-sweep-area)
+ (locals 0)
+ (body (perform (op push-frame))
+       (perform (op reserve-locals) (const 0))
+
+       (assign (temp base) (op load-array) (arg 0) (symconst heap:base))
+       (assign (temp page) (const 0))
+       (assign (temp pages) (op load-array) (arg 0) (symconst var-heap:pages))
+       (assign (temp cells-per-page) (op bit-lshift) (symconst var-heap/words-per-page) (symconst shift-cells-per-word))
+       (assign (temp total-cells) (op mul) (temp pages) (temp cells-per-page))
+       (assign (temp limit) (op add) (temp base) (temp total-cells))
+
+       (label mm-var-heap-sweep-area/begin)
+       (assign (temp test) (op less-than) (temp page) (temp pages))
+       (branch-zero (label mm-var-heap-sweep-area/end) (temp test))
+
+       (push (temp page))
+       (push (arg 0))
+       (perform (op call) (const mm-var-heap-page-empty?))
+       (branch-zero (label mm-var-heap-sweep-area/empty) (reg accum))
+
+       (assign (temp pages-to-skip) (op load-array) (temp base) (const 0))
+       (assign (temp gcdw) (op load-array) (temp base) (const 2))
+
+       (assign (temp test) (op bit-and) (temp gcdw) (symconst gcdw:mark-mask))
+       (branch-nonzero (label mm-var-heap-sweep-area/inuse) (temp test))
+
+       ;; the GCDW has the mark bit unset - so we are going to free the pointer
+       (assign (temp malloc-pointer) (op add-pointer) (temp base) (const 1))
+
+       (push (temp malloc-pointer))
+       (push (arg 0))
+       (perform (op call) (const mm-var-heap-area-free))
+       (assign (temp gcdw) (const 0))
+
+       (label mm-var-heap-sweep-area/inuse)
+
+       ;; unmark - make sure the GCDW's mark bit is unset
+       (assign (temp unmarked-mask) (op bit-not) (symconst gcdw:mark-mask))
+       (assign (temp gcdw) (op bit-and) (temp gcdw) (temp unmarked-mask))
+       (perform (op store-array) (temp base) (const 2) (temp gcdw))
+
+       (assign (temp page) (op add) (temp page) (temp pages-to-skip))
+       (assign (temp cells-to-skip) (op mul) (temp pages-to-skip) (temp cells-per-page))
+       (assign (temp base) (op add) (temp base) (temp cells-to-skip))
+       (goto (label mm-var-heap-sweep-area/begin))
+
+       (label mm-var-heap-sweep-area/empty)
+       ;; skip ahead to the next page
+       (assign (temp page) (op add) (temp page) (const 1))
+       (assign (temp base) (op add) (temp base) (temp cells-per-page))
+       (goto (label mm-var-heap-sweep-area/begin))
+
+       (label mm-var-heap-sweep-area/end)
+       (perform (op pop-frame))
+       (return (const 1))))

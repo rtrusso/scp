@@ -1,0 +1,203 @@
+(include "mm-param.sasm")
+(include "gc-defines.sasm")
+(include "gc-externs.sasm")
+
+(export gc-mark-pointer)
+(extern gc-mark-array)
+(extern gc-mark-class-instance)
+
+(function
+ (name gc-mark-pointer)
+ (locals 0)
+ (body (perform (op push-frame))
+       (perform (op reserve-locals) (const 0))
+
+       ;; (push (const #xdeadc0da))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       ;; (push (arg 0))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+
+;       ;; begin DEBUG
+;       (perform (op debug-out) (const "GC-mark-pointer: ") (arg 0))
+;       ;; end DEBUG
+
+       (branch-zero (label gc-mark-pointer/end) (arg 0))
+
+       ;; query the global heap range
+
+       (assign (temp base) (op load-array) (const gc-heap-base) (const 0))
+       (assign (temp limit) (op load-array) (const gc-heap-limit) (const 0))
+
+       ;; test to make sure the pointer falls within that range
+
+       (assign (temp test) (op less-than) (arg 0) (temp base))
+       (branch-nonzero (label gc-mark-pointer/end) (temp test))
+
+       (assign (temp test) (op less-than) (arg 0) (temp limit))
+       (branch-zero (label gc-mark-pointer/end) (temp test))
+
+       ;; it does, so look up a specific heap
+       (push (arg 0))
+       (perform (op call) (const mm-heap-assoc))
+       (assign (temp heap) (reg accum))
+       (branch-zero (label gc-mark-pointer/end) (temp heap))
+
+       ;; (push (const ">>> gc-mark-pointer"))
+       ;; (perform (op call) (const mj-system-out-println-string))
+       ;; (pop (const 1))
+
+       ;; (push (const #xdeadc0de))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       ;; (push (arg 0))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       ;; (push (temp heap))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       ;; (push (const "<<< gc-mark-pointer"))
+       ;; (perform (op call) (const mj-system-out-println-string))
+       ;; (pop (const 1))
+
+       ;; it was found in a specific heap, this is most likely a real pointer.
+       ;; Look up the heap index of the object.
+       ;;
+       ;; Based on the heap index, look up the offset of the given pointer in the heap page.
+       ;; if it is heap page + 1, then it is an object (1st word is the heap control word)
+       ;;    0. heap control word <-- heap page base
+       ;;    1. vtab pointer      <-- pointer
+       ;;    2. GCDW
+       ;;    3+ body
+       ;; if it is heap page + 3, then it is an array
+       ;;    0. heap control word <-- heap page base
+       ;;    1. length
+       ;;    2. GCDW
+       ;;    3+ body              <-- pointer
+       ;;
+       ;;
+       ;;
+       ;; Right now the GC module must be aware of the heap layout, in
+       ;; order to figure out what offset a pointer is from the page
+       ;; it is contained in (so that in turn the GC will know whether
+       ;; the object is an array or an object).  That should be
+       ;; modified, so that instead the GC will only need to look in a
+       ;; known location relative to the object pointer in order to
+       ;; find the GCDW.
+       ;;
+       ;; Sweep should be modularized to be a heap responsibility,
+       ;; because that sweep operation is dependent on heap layout.
+       ;; Sweep also clears the GCDW mark bit off of every object.
+       ;; The heap will have to know where to find the GCDW relative
+       ;; to the start of its page.
+
+       ;; subtract the pointer from the heap base to get the offset in 'cell' units
+       (assign (temp base) (op load-array) (temp heap) (symconst heap:base))
+       (assign (temp cell-offset) (op sub) (arg 0) (temp base))
+
+       ;; next figure out the pointer's offset from the base of the heap in 'word' units
+       (assign (temp word-offset) (op bit-rshift) (temp cell-offset) (symconst shift-cells-per-word))
+
+       ;; next figure out how many words there are in a page.  Compute the 'modulus'.
+       (assign (temp mask-words-per-page) (op load-array) (temp heap) (symconst heap:mask-words-per-page))
+       (assign (temp word-offset-mask) (op bit-and) (temp word-offset) (temp mask-words-per-page))
+
+       ;; finally, account for the heap-specific offset relative to the start of that heap page.
+       (assign (temp heap-object-offset) (op load-array) (temp heap) (symconst heap:object-offset))
+       (assign (temp word-offset-mask) (op sub) (temp word-offset-mask) (temp heap-object-offset))
+
+;       ;; begin DEBUG
+;       (perform (op debug-out) (const "gc-mark-pointer; offset=") (temp word-offset-mask))
+;       ;; end DEBUG
+
+       (assign (temp offset-1) (op sub) (temp word-offset-mask) (const 0))
+       (branch-nonzero (label gc-mark-pointer/test3) (temp offset-1))
+
+       ;; It is possible that this might be a non-aliased pointer to
+       ;; an array instead of a pointer to a class instance.  We test
+       ;; that here.  Notice that in this case, the GCDW will always
+       ;; be located at an offset of 1 from the non-aliased pointer.
+       ;;
+       ;; This code is only necessary when marking root pointers in
+       ;; the stack as used by the heap/GC code.  This case should not
+       ;; turn up in user code whatsoever.  We should always get the
+       ;; aliased array pointer from user code.  But it's possible
+       ;; that there will be a non-aliased pointer sitting around in
+       ;; the stack from a previous GC or heap operation.  So this
+       ;; code still needs to run all the time.
+       ;;
+       (assign (temp gcdw) (op load-array) (arg 0) (const 1))
+
+       ;; (push (const #xdeadc0db))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       ;; (push (temp gcdw))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       (assign (temp array-mask-result)
+               (op bit-and) (temp gcdw) (symconst gcdw:array-mask))
+       (branch-nonzero (label gc-mark-pointer/mark-non-aliased-array)
+                       (temp array-mask-result))
+
+       ;; Finally, check for non-class-instance objects, which use the
+       ;; "done" field of the GCDW to record a type ID integer.  Such
+       ;; objects will have a non-zero "done" field and have no
+       ;; interior pointers so they can be marked inline.  These forms
+       ;; of objects are typically objects allocated by the Scheme
+       ;; frontend of primitive type, such as characters or integers.
+       (assign (temp gcdw-done-field)
+               (op bit-and) (temp gcdw) (symconst gcdw:done-mask))
+       (branch-zero (label gc-mark-pointer/class-instance)
+                    (temp gcdw-done-field))
+
+       ;; Mark the primitive object.
+       (assign (temp gcdw) (op bit-or) (temp gcdw) (symconst gcdw:mark-mask))
+       (perform (op store-array) (arg 0) (const 1) (temp gcdw))
+       (goto (label gc-mark-pointer/end))
+
+       ;; Mark a class instance
+       (label gc-mark-pointer/class-instance)
+       ; check for 0 class pointer
+       (assign (temp gcdw) (op load-array) (arg 0) (const 0))
+       (branch-zero (label gc-mark-pointer/end) (temp gcdw))
+       ; actually mark the class instance
+       (push (arg 0))
+       (perform (op call) (const gc-mark-class-instance))
+       (goto (label gc-mark-pointer/end))
+
+       ;; Mark an aliased array pointer
+       (label gc-mark-pointer/mark-non-aliased-array)
+       (assign (temp aliased-array) (op add-pointer) (arg 0) (const 2))
+       (push (temp aliased-array))
+       (perform (op call) (const gc-mark-array))
+       (goto (label gc-mark-pointer/end))
+
+       ;; One final check for a valid array pointer ...
+       (label gc-mark-pointer/test3)
+
+       (assign (temp offset-3) (op sub) (temp word-offset-mask) (const 2))
+       (branch-nonzero (label gc-mark-pointer/end) (temp offset-3))
+
+       ;; ... And finally mark the array pointer.
+       ;; (push (const #xdeadc0df))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       ;; (push (temp offset-3))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       (push (arg 0))
+       (perform (op call) (const gc-mark-array))
+
+       (label gc-mark-pointer/end)
+       (perform (op pop-frame))
+       (return (const 1))))

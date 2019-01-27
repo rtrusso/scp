@@ -1,0 +1,18 @@
+case 1
+;; Modifies: accum
+(assign (reg accum) (local 0))
+(perform (op pop-frame))
+(return (const 0))
+
+case 2
+
+case 3
+;; Needs   : accum
+;; Modifies: operand
+(assign (reg operand) (reg accum))
+(goto (label foobar))
+
+case 4
+;; Modifies: accum
+(assign (reg accum) (arg 2))
+(goto (label foobar))

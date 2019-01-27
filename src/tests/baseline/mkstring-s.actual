@@ -1,0 +1,12 @@
+case 1: 
+(string? (make-string 10)) => #t
+
+case 2: 
+(string-length (make-string 10)) => 10
+
+case 3: 
+(make-string 10) => [          ]
+
+case 4: 
+(make-string 10 a) => [aaaaaaaaaa]
+

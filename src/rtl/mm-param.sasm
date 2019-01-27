@@ -1,0 +1,54 @@
+;; mm-param.sasm
+;; Definitions for shared parameters of heap management and garbage collection
+
+(define-symconst 
+
+  ;; == general heap data structure ==
+  ;; all heap subclasses must at a minimum
+  ;; provide this object layout.
+  ;;
+  ;; operations on heaps:
+  ;;
+  ;;  - get the base and limit of a heap, to determine if a pointer
+  ;;    falls within that heap
+  ;;
+  ;;  - get the offset of an aliased pointer within a heap page (need
+  ;;    base, shift-words-per-page, mask-words-per-page)
+  ;;
+  ;;
+  (sizeof:heap 8)
+  (heap:base 0)
+  (heap:limit 1)
+  (heap:object-offset 2)
+  (heap:words-per-page 3)
+  (heap:shift-words-per-page 4)
+  (heap:mask-words-per-page 5)
+  (heap:next 6)
+  (heap:type 7)
+
+  (heap-type:fixed-alloc #xdeadface)
+  (heap-type:var-alloc   #xbaadf00d)
+
+  ;; variable-sized heap data structure
+  (sizeof:var-heap 12)
+  (var-heap:hope 9)
+  (var-heap:bitmap 10)
+  (var-heap:pages 11)
+
+  ;; fixed-allocation heap data structure
+  (sizeof:fixed-heap 10)
+  (fixed-heap:free-list 8)
+  (fixed-heap:next-fixed-heap 9)
+
+  )
+
+
+;;                 (assign (temp pages) (op load-array) (temp heap) (symconst heap:pages))
+;;                 (assign (temp words) (op mul) (temp pages) (symconst-bad words-per-page))
+;;                 (assign (temp cells) (op bit-lshift) (temp words) (symconst-bad shift-cells-per-word))
+
+
+;; -  (words-per-page 32)
+;; -  (shift-words-per-page 5)
+;; -  (mask-words-per-page 31)
+;; -  (words-per-heap-header 8)

@@ -1,0 +1,96 @@
+;; gc.sasm
+;; Garbage collection routines
+
+;; Garbage Collection Descriptor Word: GCDW
+;;
+;; DONE  - 16 bits, used for pointer reversal DFS (i.e. no class can have
+;;         more than 65535 members)
+;;         *NOTE* Also used for type tag, see below. *NOTE*
+;; MARK  - 1 bit, flag used in mark & sweep
+;; LEAF  - 1 bit, flag used to denote that the class or array has no child
+;;         pointers
+;; ARRAY - 1 bit, used to denote that the object is an array and not a class
+;;         instance object
+;; GCE   - 1 bit, "garbage collection enable"; any objects not marked with
+;;         this bit are considered to be explicitly managed with malloc/free
+;;
+;;
+;; CLASS INSTANCE OBJECT LAYOUT:
+;;
+;;  +-----+-----+-----+-
+;;  | CP  | GCDW| M0  | ...
+;;  +-----+-----+-----+-
+;;
+;;  CP   - class descriptor pointer
+;;  GCDW - garbage collection descriptor word
+;;  M0   - member #0
+;;
+;; CLASS DESCRIPTOR OBJECT LAYOUT:
+;;
+;;  +-----+-----+-----+-
+;;  | NM  | F0  | F1  | ...
+;;  +-----+-----+-----+-
+;;
+;;  NM - number of instance members
+;;  F0 - pointer to method 0
+;;  F1 - pointer to method 1
+;;
+;; ARRAY OBJECT LAYOUT:
+;;
+;;  +-----+-----+-----+-
+;;  | NW  | GCDW| IDX0| ...
+;;  +-----+-----+-----+-
+;;
+;;  NW   - number of words in the array, not counting NW or GCDW
+;;  GCDW - garbage collection descriptor word
+;;  IDX0 - index #0
+
+;; Garbage Collection Algorithm: mark and sweep, with pointer reversal
+;;
+;; A simple, non-incremental, non-concurrent, mark&sweep algorithm is
+;; employed.  In the event of a malloc() failure, the GC module is
+;; invoked.
+;;
+;; The GC module will traverse the entire current call-stack contents
+;; looking for heap pointers; these will become the GC root pointers.
+;; Only the stack needs to be traversed; no registers are used as GC
+;; roots.  This is because all registers are treated as caller-save by
+;; this compiler and runtime system.  Therefore CPU registers are not
+;; considered GC roots.  All GC roots will be found in either global
+;; variables or in the stack.
+;;
+;; For each heap pointer found in the call stack, the GC mark routine
+;; is invoked.  This routine performs a DFS using the pointer-reversal
+;; technique.  The low 16 bits of the GCDW are used for the "done"
+;; record, to know how many fields of the current object have been
+;; marked.  This field is used to implement the "pointer reversal" technique
+;; for walking GC-managed objects during the mark-and-sweep phase.  This
+;; clever, textbook technique is used to eliminate the need for a deep call
+;; stack that is usually required by a straightforward recursive walk
+;; algorithm.  *NOTE* Currently, this algorithm is planned for implementation
+;; but is not currently used.  Instead, the "DONE" field is used as a type
+;; tag field by the Scheme compiler frontend. *NOTE*
+;;
+;; The sweep phase traverses the entire heap, reclaiming objects that
+;; are not marked and un-marking any objects that are marked, for the
+;; next traversal.
+;;
+;; The heap (defined in heap.sasm) has special properties that make it
+;; easy and relatively precise to determine if a given integer value
+;; is indeed a heap pointer.  First, the pointer must fall within the
+;; global bounds of the base of the lowest heap area and the limit of
+;; the highest heap area.  If that check passes, it must fall inside
+;; the limits of one specific heap area.  After that check passes, the
+;; base pointer for the heap is subtracted, and the result must be an
+;; integer multiple of the WORDS-PER-PAGE heap constant.  If all of
+;; these checks pass, the pointer is indeed a genuine heap pointer for
+;; all intents and purposes.  Care must be taken with array pointers
+;; because they will be aliased; pointing two words ahead of the correct
+;; heap pointer, and this will be a special case of the check above.
+;;
+
+(export gc-heap-base)
+(export gc-heap-limit)
+(global gc-heap-base (const 0))
+(global gc-heap-limit (const 0))
+

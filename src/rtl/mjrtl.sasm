@@ -1,0 +1,15 @@
+;; mjrtl.sasm
+;; callee-pop versions of mjrtl functions
+
+(extern mj-system-out-println)
+(export cp-mj-system-out-println)
+
+(function (name cp-mj-system-out-println)
+          (locals 0)
+          (body (perform (op push-frame))
+                (push (arg 0))
+                (perform (op call) (const mj-system-out-println))
+;                (pop (const 1))
+                (perform (op pop-frame))
+                (return (const 1))))
+

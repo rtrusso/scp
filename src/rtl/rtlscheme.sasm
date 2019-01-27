@@ -1,0 +1,499 @@
+;; rtlscheme.sasm
+;;
+
+(extern cp-rtl-malloc)
+(extern c-scheme-type-error)
+(extern c-scheme-arg-count-error)
+(extern c-scheme-bounds-error)
+(extern c-scheme-open-file)
+(extern c-scheme-close-file)
+(extern c-scheme-read-file)
+(extern c-scheme-write-file)
+(extern c-scheme-get-stdin)
+(extern c-scheme-get-stdout)
+(extern c-scheme-getenv)
+(extern c-scheme-delete-file)
+(extern c-scheme-rename-file)
+(extern c-scheme-stat-file)
+(extern c-scheme-current-seconds)
+(extern c-scheme-current-milliseconds)
+(extern c-scheme-argv)
+(extern $scmliteral-unspecified)
+
+(export scheme-rtl-runtime-type-error)
+(export scheme-rtl-runtime-argument-count-error)
+(export scheme-rtl-runtime-bounds-error)
+(export scheme-rtl-close-file-handle)
+(export scheme-rtl-get-stdin-handle)
+(export scheme-rtl-get-stdout-handle)
+(export scheme-rtl-open-input-file-handle)
+(export scheme-rtl-open-output-file-handle)
+(export scheme-rtl-read-byte)
+(export scheme-rtl-write-byte)
+(export scheme-rtl-getenv)
+(export scheme-rtl-delete-file)
+(export scheme-rtl-rename-file)
+(export scheme-rtl-stat-file)
+(export scheme-rtl-current-seconds)
+(export scheme-rtl-current-milliseconds)
+(export scheme-rtl-strlen)
+(export scheme-rtl-strcpy)
+(export scheme-rtl-mkstring)
+(export c-scheme-rtl-init-argv)
+(export $scmglobal--Asargv-As)
+
+(global $scmglobal--Asargv-As
+        (const 0)
+        )
+
+(function (name c-scheme-rtl-init-argv)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (save (reg index))
+                (assign (reg accum) (label c-scheme-argv))
+                (assign (reg index) (op load-array) (reg accum) (const 0))
+                (assign (reg accum) (label $scmglobal--Asargv-As))
+                (perform (op store-array) (reg accum) (const 0) (reg index))
+                (restore (reg index))
+
+                (perform (op pop-frame))
+                (return)))
+
+(function (name scheme-rtl-runtime-type-error)
+          (locals 0)
+;;
+;; arg0: int - the expected type tag
+;; arg1: void* - the actual object
+;; return: none
+;;
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (push (arg 1))
+                (push (arg 0))
+                (perform (op call) (label c-scheme-type-error))
+
+                (assign (reg accum) (label $scmliteral-unspecified))
+                (perform (op pop-frame))
+                (return (const 2))))
+
+(function (name scheme-rtl-runtime-argument-count-error)
+          (locals 0)
+
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (push (arg 1))
+                (push (arg 0))
+                (perform (op call) (label c-scheme-arg-count-error))
+
+                (assign (reg accum) (label $scmliteral-unspecified))
+                (perform (op pop-frame))
+                (return (const 2))))
+
+(function (name scheme-rtl-runtime-bounds-error)
+          (locals 0)
+
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (push (arg 2))
+                (push (arg 1))
+                (push (arg 0))
+                (perform (op call) (label c-scheme-bounds-error))
+                (pop (const 3))
+
+                (assign (reg accum) (label $scmliteral-unspecified))
+                (perform (op pop-frame))
+                (return (const 3))))
+
+(function (name scheme-rtl-close-file-handle)
+          (locals 0)
+;;
+;; arg0: FILE* - the CRT file handle.
+;; return: none
+;;
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (push (arg 0))
+                (perform (op call) (label c-scheme-close-file))
+                (pop (const 1))
+
+                (perform (op pop-frame))
+                (return (const 1))))
+
+(function (name scheme-rtl-get-stdin-handle)
+          (locals 0)
+;;
+;; <no args>
+;; return: FILE*
+;;
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (perform (op call) (label c-scheme-get-stdin))
+
+                (perform (op pop-frame))
+                (return (const 0))))
+
+(function (name scheme-rtl-get-stdout-handle)
+          (locals 0)
+;;
+;; <no args>
+;; return: FILE*
+;;
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (perform (op call) (label c-scheme-get-stdout))
+
+                (perform (op pop-frame))
+                (return (const 0))))
+
+(function (name scheme-rtl-open-input-file-handle)
+          (locals 0)
+;;
+;; arg0: schar* - string pointer
+;; arg1: int - string length
+;; return: FILE*
+;;
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                ;; arg 2 - a flag indicating read mode.
+                (assign (reg accum) (const 1))
+                (push (reg accum))
+                ;; arg 1 - string length.
+                (assign (reg accum) (arg 1))
+                (push (reg accum))
+                ;; arg 0 - string pointer
+                (assign (reg accum) (arg 0))
+                (push (reg accum))
+
+                (perform (op call) (label c-scheme-open-file))
+                (pop (const 3))
+
+                (perform (op pop-frame) (const 0))
+                (return (const 2))))
+
+(function (name scheme-rtl-open-output-file-handle)
+          (locals 0)
+;;
+;; arg0: schar* - string pointer
+;; arg1: int - string length
+;; return: FILE*
+;;
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                ;; arg 2 - a flag indicating write mode.
+                (assign (reg accum) (const 0))
+                (push (reg accum))
+                ;; arg 1 - string length.
+                (assign (reg accum) (arg 1))
+                (push (reg accum))
+                ;; arg 0 - string pointer
+                (assign (reg accum) (arg 0))
+                (push (reg accum))
+
+                (perform (op call) (label c-scheme-open-file))
+                (pop (const 3))
+
+                (perform (op pop-frame) (const 0))
+                (return (const 2))))
+
+(function (name scheme-rtl-read-byte)
+          (locals 0)
+;;
+;; arg0: FILE*
+;; return: int
+;;
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (push (arg 0))
+                (perform (op call) (const c-scheme-read-file))
+                (pop (const 1))
+
+                (perform (op pop-frame))
+                (return (const 1))))
+
+(function (name scheme-rtl-write-byte)
+          (locals 0)
+;;
+;; arg0: schar
+;; arg1: FILE*
+;; return: int
+;;
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (push (arg 1))
+                (push (arg 0))
+                (perform (op call) (const c-scheme-write-file))
+                (pop (const 2))
+
+                (perform (op pop-frame))
+                (return (const 2))))
+
+(function (name scheme-rtl-getenv)
+          (locals 0)
+          ;;
+          ;; arg0: schar* - string pointer
+          ;; arg1: int - string length
+          ;; return: char* - C string pointer
+          ;;
+          (body
+           (perform (op push-frame))
+           (perform (op reserve-locals) (const 0))
+
+           (assign (reg accum) (arg 1))
+           (push (reg accum))
+           (assign (reg accum) (arg 0))
+           (push (reg accum))
+           (perform (op call) (label c-scheme-getenv))
+           (pop (const 2))
+
+           (perform (op pop-frame) (const 0))
+           (return (const 2))
+           ))
+
+(function (name scheme-rtl-delete-file)
+          (locals 0)
+          ;;
+          ;; arg0: schar* - string pointer
+          ;; arg1: int - string length
+          ;; return: int - status, 0 indicates success
+          ;;
+          (body
+           (perform (op push-frame))
+           (perform (op reserve-locals) (const 0))
+
+           (assign (reg accum) (arg 1))
+           (push (reg accum))
+           (assign (reg accum) (arg 0))
+           (push (reg accum))
+           (perform (op call) (label c-scheme-delete-file))
+           (pop (const 1))
+
+           (perform (op pop-frame) (const 0))
+           (return (const 2))
+           ))
+
+(function (name scheme-rtl-rename-file)
+          (locals 0)
+          ;;
+          ;; arg0: schar* - string1 pointer
+          ;; arg1: int - string1 length
+          ;; arg2: schar* - string2 pointer
+          ;; arg3: int - string2 length
+          ;; return: int - status, 0 indicates success
+          ;;
+          (body
+           (perform (op push-frame))
+           (perform (op reserve-locals) (const 0))
+
+           (assign (reg accum) (arg 3))
+           (push (reg accum))
+           (assign (reg accum) (arg 2))
+           (push (reg accum))
+           (assign (reg accum) (arg 1))
+           (push (reg accum))
+           (assign (reg accum) (arg 0))
+           (push (reg accum))
+           (perform (op call) (label c-scheme-rename-file))
+           (pop (const 4))
+
+           (perform (op pop-frame) (const 0))
+           (return (const 4))
+           ))
+
+(function (name scheme-rtl-stat-file)
+          (locals 0)
+          ;;
+          ;; arg0: schar* - string pointer
+          ;; arg1: int - string length
+          ;; arg2: int* - vector body pointer
+          ;; arg3: int - vector length
+          ;; return: int - status, 0 indicates success
+          ;;
+          (body
+           (perform (op push-frame))
+           (perform (op reserve-locals) (const 0))
+
+           (assign (reg accum) (arg 3))
+           (push (reg accum))
+           (assign (reg accum) (arg 2))
+           (push (reg accum))
+           (assign (reg accum) (arg 1))
+           (push (reg accum))
+           (assign (reg accum) (arg 0))
+           (push (reg accum))
+           (perform (op call) (label c-scheme-stat-file))
+           (pop (const 4))
+
+           (perform (op pop-frame) (const 0))
+           (return (const 1))
+           ))
+
+(function (name scheme-rtl-current-seconds)
+          (locals 0)
+          ;;
+          ;; <no args>
+          ;; return: int
+          ;;
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (perform (op call) (label c-scheme-current-seconds))
+
+                (perform (op pop-frame) (const 0))
+                (return (const 0))))
+
+(function (name scheme-rtl-current-milliseconds)
+          (locals 0)
+          ;;
+          ;; <no args>
+          ;; return: int
+          ;;
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (perform (op call) (label c-scheme-current-milliseconds))
+
+                (perform (op pop-frame) (const 0))
+                (return (const 0))))
+
+(function (name scheme-rtl-strlen)
+          (locals 0)
+          ;;
+          ;; arg0: char* - string
+          ;; return: int - length
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (reg operand) (const 0))
+                (assign (reg index) (arg 0))
+
+                (label scheme-rtl-strlen/loop)
+                (assign (reg accum) (op load-array) (reg index) (const 0))
+
+                (assign (reg this) (op bit-and) (reg accum) (const #x000000ff))
+                (branch-zero (label scheme-rtl-strlen/done) (reg this))
+
+                (assign (reg operand) (op add) (reg operand) (const 1))
+                (assign (reg this) (op bit-and) (reg accum) (const #x0000ff00))
+                (branch-zero (label scheme-rtl-strlen/done) (reg this))
+
+                (assign (reg operand) (op add) (reg operand) (const 1))
+                (assign (reg this) (op bit-and) (reg accum) (const #x00ff0000))
+                (branch-zero (label scheme-rtl-strlen/done) (reg this))
+
+                (assign (reg operand) (op add) (reg operand) (const 1))
+                (assign (reg this) (op bit-and) (reg accum) (const #xff000000))
+                (branch-zero (label scheme-rtl-strlen/done) (reg this))
+
+                (assign (reg operand) (op add) (reg operand) (const 1))
+                (assign (reg index) (op add-pointer) (reg index) (const 1))
+                (goto (label scheme-rtl-strlen/loop))
+
+                (label scheme-rtl-strlen/done)
+                (assign (reg accum) (reg operand))
+                (perform (op pop-frame) (const 0))
+                (return (const 1))))
+
+(function (name scheme-rtl-strcpy)
+          (locals 0)
+          ;;
+          ;; arg0: char* - C source string
+          ;; arg1: int* - scheme destination string
+          ;; return: void
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (reg index) (arg 0))
+                (assign (reg operand) (arg 1))
+
+                (label scheme-rtl-strcpy/loop)
+                ;; copy
+                (assign (reg accum) (op load-array) (reg index) (const 0))
+
+                ;; byte 0 - LSB
+                (assign (reg this) (op bit-and) (reg accum) (const #x000000ff))
+                (perform (op store-array) (reg operand) (const 0) (reg this))
+                (branch-zero (label scheme-rtl-strcpy/done) (reg this))
+                (assign (reg operand) (op add-pointer) (reg operand) (const 1))
+
+                ;; byte 1
+                (assign (reg accum) (op bit-rshift) (reg accum) (const 8))
+                (assign (reg this) (op bit-and) (reg accum) (const #x000000ff))
+                (perform (op store-array) (reg operand) (const 0) (reg this))
+                (branch-zero (label scheme-rtl-strcpy/done) (reg this))
+                (assign (reg operand) (op add-pointer) (reg operand) (const 1))
+
+                ;; byte 2
+                (assign (reg accum) (op bit-rshift) (reg accum) (const 8))
+                (assign (reg this) (op bit-and) (reg accum) (const #x000000ff))
+                (perform (op store-array) (reg operand) (const 0) (reg this))
+                (branch-zero (label scheme-rtl-strcpy/done) (reg this))
+                (assign (reg operand) (op add-pointer) (reg operand) (const 1))
+
+                ;; byte 3
+                (assign (reg accum) (op bit-rshift) (reg accum) (const 8))
+                (assign (reg this) (op bit-and) (reg accum) (const #x000000ff))
+                (perform (op store-array) (reg operand) (const 0) (reg this))
+                (branch-zero (label scheme-rtl-strcpy/done) (reg this))
+                (assign (reg operand) (op add-pointer) (reg operand) (const 1))
+
+                (assign (reg index) (op add-pointer) (reg index) (const 1))
+                (goto (label scheme-rtl-strcpy/loop))
+
+                (label scheme-rtl-strcpy/done)
+                (perform (op pop-frame) (const 0))
+                (return (const 2))))
+
+(function (name scheme-rtl-mkstring)
+          (locals 0)
+          ;;
+          ;; arg0: char* - source string
+          ;; return: scheme* - string
+          ;;
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (reg accum) (arg 0))
+
+                ;; get the string length
+                (push (reg accum))
+                (perform (op call) (label scheme-rtl-strlen))
+                (save (reg accum))
+                ;; add 3, for the GCDW, array length, and NUL terminator
+                (assign (reg accum) (op add) (reg accum) (const 3))
+                (push (reg accum))
+                (perform (op call) (label cp-rtl-malloc))
+
+                ;; index=length
+                (restore (reg index))
+                (perform (op store-array) (reg accum) (const 0) (reg index))
+                ;; store the scheme string type tag
+                (perform (op store-array) (reg accum) (const 1) (const 6))
+
+                ;; operand = source string
+                (assign (reg operand) (arg 0))
+                ;; index = destination string (no scheme string header)
+                (assign (reg index) (op add-pointer) (reg accum) (const 2))
+                (save (reg accum))
+
+                ;; call strcpy
+                (push (reg index)) ; destination
+                (push (reg operand)) ; source
+                (perform (op call) (label scheme-rtl-strcpy))
+
+                (restore (reg accum)) ; allocated string
+
+                (label mkstring/done)
+                (perform (op pop-frame) (const 0))
+                (return (const 1))))

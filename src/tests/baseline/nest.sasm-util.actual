@@ -1,0 +1,21 @@
+;; externs: mj-system-out-println
+;; defined: myfunction
+;; referenced: mj-system-out-println
+
+
+(entry @main:myfunction)
+(extern mj-system-out-println)
+(function
+  (name @main:myfunction)
+  (locals 0)
+  (body
+    (assign (reg accum) (op add) (result (op mul) (const 3) (const 4)) (result (op sub) (const 10) (const 5)))
+    (push (result (op mul) (const 2) (reg accum)))
+    (perform (op call) (label mj-system-out-println))
+    (pop (const 1))
+    (push (const 0))
+    (perform (op call) (label mj-system-out-println))
+    (pop (const 1))
+    (return (const 0))
+    ))
+

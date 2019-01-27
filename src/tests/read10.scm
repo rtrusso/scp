@@ -1,0 +1,13 @@
+(define s (call-with-input-file "tests/read-escapes.scm"
+            (lambda (x) (read x))))
+(display "read: ")
+(newline)
+(write s)
+(newline)
+(for-each (lambda (x)
+            (display "  ")
+            (write x)
+            (display " -> #x")
+            (display (number->string (char->integer x) 16))
+            (newline))
+          (string->list s))

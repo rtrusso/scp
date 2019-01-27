@@ -1,0 +1,11 @@
+(define get-number
+  (let ((number 3))
+    (lambda ()
+      (set! number (+ 1 number))
+      number)))
+(display (get-number))
+(newline)
+(display (get-number))
+(newline)
+(display (get-number))
+(newline)

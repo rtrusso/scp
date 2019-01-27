@@ -1,0 +1,48 @@
+(include "mm-param.sasm")
+(include "gc-defines.sasm")
+(include "gc-externs.sasm")
+
+(export gc-mark-memory-range)
+
+(function
+ (name gc-mark-memory-range)
+ (locals 0)
+ (body (perform (op push-frame))
+       (perform (op reserve-locals) (const 0))
+
+;        ;; begin DEBUG
+;        (assign (reg accum) (label gc-debug-message-3))
+;        (push (reg accum))
+;        (perform (op call) (const mj-system-out-println-string))
+;        (pop (const 1))
+;        (push (arg 0))
+;        (perform (op call) (const mj-system-out-println))
+;        (pop (const 1))
+;        (push (arg 1))
+;        (perform (op call) (const mj-system-out-println))
+;        (pop (const 1))
+;        ;; end DEBUG
+
+       (assign (temp range-base) (arg 0))
+       (assign (temp range-limit) (arg 1))
+
+       (perform (op call) (const mm-heap-global-base))
+       (perform (op store-array) (const gc-heap-base) (const 0) (reg accum))
+
+       (perform (op call) (const mm-heap-global-limit))
+       (perform (op store-array) (const gc-heap-limit) (const 0) (reg accum))
+
+       (label gc-mark-memory-range/begin)
+       (assign (temp test) (op less-than) (temp range-base) (temp range-limit))
+       (branch-zero (label gc-mark-memory-range/end) (temp test))
+
+       (assign (temp ptr) (op load-array) (temp range-base) (const 0))
+       (push (temp ptr))
+       (perform (op call) (const rtl-gc-mark-pointer))
+       (pop (const 1))
+       (assign (temp range-base) (op add-pointer) (temp range-base) (const 1))
+       (goto (label gc-mark-memory-range/begin))
+
+       (label gc-mark-memory-range/end)
+       (perform (op pop-frame))
+       (return (const 2))))

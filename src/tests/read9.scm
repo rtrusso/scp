@@ -1,0 +1,16 @@
+(define l (call-with-input-file "tests/read-ext-id.scm"
+            (lambda (f) (read f))))
+
+(let ((index 0))
+  (for-each (lambda (x)
+              (set! index (+ index 1))
+              (display "index ")
+              (display index)
+              (display ": ")
+              (write x)
+              (newline)
+              (display "  symbol? ")
+              (display (symbol? x))
+              (newline)
+              (newline))
+            l))

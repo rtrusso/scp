@@ -1,0 +1,208 @@
+;; heaptest.sasm
+;; A heap test program, using the functions exported by heap.sasm
+
+(entry exercise-heap)
+
+;; (function (name heap-test-main)
+;;           (locals 0)
+;;           (body (perform (op push-frame))
+;;                 (perform (op reserve-locals) (const 0))
+
+;;                 (push (const 56320)) ;; statically configured pointers into machine2 RAM
+;;                 (push (const 9216))
+;;                 (perform (op call) (const mm-heap-add-area))
+
+;;                 (push (const "== BEGIN HEAP DUMP =="))
+;;                 (perform (op call) (const cp-mj-system-out-println))
+
+;;                 (perform (op call) (const dump-heap))
+
+;;                 (push (const "== END HEAP DUMP =="))
+;;                 (perform (op call) (const cp-mj-system-out-println))
+
+;;                 (assign (temp heap) (op load-array) (const root-heap-pointer) (const 0))
+
+;;                 (push (const 32))
+;;                 (push (const 32))
+;;                 (push (temp heap))
+;;                 (perform (op call) (const mm-heap-claim-page-range))
+
+;;                 (push (const 32))
+;;                 (push (temp heap))
+;;                 (perform (op call) (const mm-heap-page-empty?))
+;;                 (push (reg accum))
+;;                 (perform (op call) (const cp-mj-system-out-println))
+
+;;                 (push (const 63))
+;;                 (push (temp heap))
+;;                 (perform (op call) (const mm-heap-page-empty?))
+;;                 (push (reg accum))
+;;                 (perform (op call) (const cp-mj-system-out-println))
+
+;;                 (push (const 33))
+;;                 (push (const 4))
+;;                 (push (temp heap))
+;;                 (perform (op call) (const mm-heap-page-range-empty?))
+;;                 (push (reg accum))
+;;                 (perform (op call) (const cp-mj-system-out-println))
+
+;;                 (push (const 30))
+;;                 (push (const 2))
+;;                 (push (temp heap))
+;;                 (perform (op call) (const mm-heap-page-range-empty?))
+;;                 (push (reg accum))
+;;                 (perform (op call) (const cp-mj-system-out-println))
+
+;;                 (push (const 32))
+;;                 (push (const 1))
+;;                 (push (temp heap))
+;;                 (perform (op call) (const mm-heap-page-range-empty?))
+;;                 (push (reg accum))
+;;                 (perform (op call) (const cp-mj-system-out-println))
+
+;;                 (push (const 32))
+;;                 (perform (op call) (const mm-malloc))
+;;                 (assign (temp mem) (reg accum))
+;;                 (push (const "malloc pointer: "))
+;;                 (perform (op call) (const cp-mj-system-out-println))
+;;                 (push (temp mem))
+;;                 (perform (op call) (const cp-mj-system-out-println))
+
+;;                 (push (temp mem))
+;;                 (perform (op call) (const mm-free))
+
+;;                 (push (const 32))
+;;                 (perform (op call) (const mm-malloc))
+;;                 (assign (temp mem) (reg accum))
+;;                 (push (reg accum))
+;;                 (perform (op call) (const cp-mj-system-out-println))
+
+;;                 (push (const 6))
+;;                 (push (temp heap))
+;;                 (perform (op call) (const mm-heap-area-malloc))
+;;                 (push (reg accum))
+;;                 (perform (op call) (const cp-mj-system-out-println))
+
+
+;;                 (push (const 64))
+;;                 (push (temp heap))
+;;                 (perform (op call) (const mm-heap-area-malloc))
+;;                 (push (reg accum))
+;;                 (perform (op call) (const cp-mj-system-out-println))
+
+;;                 (push (const 128))
+;;                 (push (temp heap))
+;;                 (perform (op call) (const mm-heap-area-malloc))
+;;                 (push (reg accum))
+;;                 (perform (op call) (const cp-mj-system-out-println))
+
+;;                 (perform (op pop-frame))
+;;                 (return (const 0))))
+
+(function (name exercise-heap)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (push (const "asdf"))
+                (perform (op call) (const cp-mj-system-out-println))
+
+                (push (const "jkl;"))
+                (perform (op call) (const cp-mj-system-out-println))
+
+                (assign (temp leftover) (const 50000))
+
+                (push (const 56320)) ;; statically configured pointers into machine2 RAM
+                (push (const 9216))
+                (perform (op call) (const mm-heap-add-area))
+
+                (push (const "exercise heap"))
+                (perform (op call) (const cp-mj-system-out-println))
+
+                (assign (temp n-items) (const 32))
+
+                (push (temp n-items))
+                (perform (op call) (const mm-malloc))
+                (assign (temp array) (reg accum))
+
+                (push (temp n-items))
+                (perform (op call) (const mm-malloc))
+                (assign (temp array-sizes) (reg accum))
+
+                (assign (temp index) (const 0))
+                (label exercise-heap/zero-start)
+                (branch-zero (label exercise-heap/zero-end)
+                             (result (op less-than)
+                                     (temp index)
+                                     (temp n-items)))
+                (perform (op store-array) (temp array) (temp index) (const 0))
+                (perform (op store-array) (temp array-sizes) (temp index) (const 0))
+                (assign (temp index) (op add) (temp index) (const 1))
+                (goto (label exercise-heap/zero-start))
+                (label exercise-heap/zero-end)
+
+                (assign (temp index) (const 0))
+                (assign (temp iter) (const 0))
+                (label exercise-heap/start)
+
+                (push (const "iteration: "))
+                (perform (op call) (const cp-mj-system-out-println))
+                (push (temp iter))
+                (perform (op call) (const cp-mj-system-out-println))
+                (push (const "leftover: "))
+                (perform (op call) (const cp-mj-system-out-println))
+                (push (temp leftover))
+                (perform (op call) (const cp-mj-system-out-println))
+
+                (branch-zero (label exercise-heap/end)
+                             (result (op less-than) (temp iter) (const 1024)))
+                (assign (temp index) (op bit-and) (temp iter) (const 31))
+
+                (branch-nonzero (label exercise-heap/free)
+                                (result (op load-array)
+                                        (temp array)
+                                        (temp index)))
+
+                (assign (temp alloc-amount) (op bit-and) (temp iter) (const 1023))
+                (assign (temp leftover) (op sub) (temp leftover) (temp alloc-amount))
+                (perform (op store-array) (temp array-sizes) (temp index) (temp alloc-amount))
+                (push (temp alloc-amount))
+                (perform (op call) (const mm-malloc))
+                (perform (op store-array) (temp array) (temp index) (reg accum))
+                (branch-nonzero (label exercise-heap/continue) (reg accum))
+                (perform (op fail))
+                (label exercise-heap/continue)
+                (assign (temp the-pointer) (reg accum))
+
+                (push (const "allocating new pointer"))
+                (perform (op call) (const cp-mj-system-out-println))
+                (push (temp index))
+                (perform (op call) (const cp-mj-system-out-println))
+                (push (temp the-pointer))
+                (perform (op call) (const cp-mj-system-out-println))
+
+                (goto (label exercise-heap/next))
+                (label exercise-heap/free)
+
+                (push (const "freeing existing pointer"))
+                (perform (op call) (const cp-mj-system-out-println))
+                (push (temp index))
+                (perform (op call) (const cp-mj-system-out-println))
+                (push (result (op load-array) (temp array) (temp index)))
+                (perform (op call) (const cp-mj-system-out-println))
+                (push (result (op load-array) (temp array-sizes) (temp index)))
+                (perform (op call) (const cp-mj-system-out-println))
+
+                (assign (temp leftover) (op add) (temp leftover) (result (op load-array) (temp array-sizes) (temp index)))
+
+                (push (result (op load-array) (temp array) (temp index)))
+                (perform (op call) (const mm-free))
+                (perform (op store-array) (temp array) (temp index) (const 0))
+
+                (label exercise-heap/next)
+                (assign (temp iter) (op add) (temp iter) (const 1))
+                (goto (label exercise-heap/start))
+
+                (label exercise-heap/end)
+                (perform (op pop-frame))
+                (return (const 0))))

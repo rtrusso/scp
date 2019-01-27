@@ -1,0 +1,11 @@
+foo: bar
+	asdf
+
+baz: $(zap)
+	jkl -y
+
+zap: $(foo tests/*.java)
+	zap -x --y $<
+
+foo2 : $(patsubst $(foo),$(bar baz/*.scm))
+	zap -x --y $<

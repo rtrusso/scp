@@ -1,0 +1,22 @@
+;; externs: gc-invoke cp-rtl-array-malloc
+;; defined: sasm-main
+;; referenced: cp-rtl-array-malloc gc-invoke
+
+
+(extern cp-rtl-array-malloc)
+(extern gc-invoke)
+(entry @main:sasm-main)
+(function
+  (name @main:sasm-main)
+  (locals 0)
+  (body
+    (perform (op push-frame))
+    (perform (op reserve-locals) (const 0))
+    (push (const 4))
+    (perform (op call) (label cp-rtl-array-malloc))
+    (push (reg accum))
+    (perform (op call) (label gc-invoke))
+    (perform (op pop-frame))
+    (return (const 0))
+    ))
+

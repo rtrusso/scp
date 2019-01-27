@@ -1,0 +1,36 @@
+(include "mm-param.sasm")
+(include "gc-defines.sasm")
+(include "gc-externs.sasm")
+
+(export gc-sweep)
+
+(function
+ (name gc-sweep)
+ (locals 0)
+ (body (perform (op push-frame))
+       (perform (op reserve-locals) (const 0))
+
+       (assign (temp heap) (op load-array) (const root-heap-pointer) (const 0))
+
+       (label gc-sweep/begin)
+       (branch-zero (label gc-sweep/end) (temp heap))
+
+;        ;; begin DEBUG
+;        (assign (reg accum) (label gc-debug-message-4))
+;        (push (reg accum))
+;        (perform (op call) (const mj-system-out-println-string))
+;        (pop (const 1))
+;        (push (temp heap))
+;        (perform (op call) (const mj-system-out-println))
+;        (pop (const 1))
+;        ;; end DEBUG
+
+       (push (temp heap))
+       (perform (op call) (const mm-heap-sweep-area))
+
+       (assign (temp heap) (op load-array) (temp heap) (symconst heap:next))
+       (goto (label gc-sweep/begin))
+
+       (label gc-sweep/end)
+       (perform (op pop-frame))
+       (return (const 0))))

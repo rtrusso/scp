@@ -1,0 +1,43 @@
+;; gctest.sasm
+;; Test app for the gc module
+
+(extern mm-heap-add-area)
+(extern gc-mark-stack-roots)
+
+(entry gc-test-main)
+
+(class <not-a-real-class>
+       (const 30))
+
+(function
+ (name gc-test-main)
+ (locals 0)
+ (body (perform (op push-frame))
+       (perform (op reserve-locals) (const 0))
+
+       (push (const 56320)) ;; statically configured pointers into machine2 RAM
+       (push (const 9216))
+       (perform (op call) (const mm-heap-add-area))
+
+       (perform (op call) (const gc-mark-stack-roots))
+
+       (push (const 32))
+       (perform (op call) (const cp-rtl-malloc))
+       (perform (op store-array) (reg accum) (const 0) (label <not-a-real-class>))
+       (assign (temp my-object) (reg accum))
+       (push (temp my-object))
+       (perform (op call) (const gc-mark-pointer))
+
+       (push (const 32))
+       (perform (op call) (const cp-rtl-array-malloc))
+       (perform (op store-array) (reg accum) (const 10) (temp my-object))
+       (perform (op store-array) (temp my-object) (const 5) (reg accum))
+       (push (reg accum))
+       (perform (op call) (const gc-mark-pointer))
+
+       (perform (op call) (const gc-sweep))
+       (perform (op call) (const gc-sweep))
+       (perform (op call) (const gc-sweep))
+
+       (perform (op pop-frame))
+       (return (const 0))))

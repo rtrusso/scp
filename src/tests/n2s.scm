@@ -1,0 +1,8 @@
+(display (number->string 3123))
+(newline)
+(display (number->string 0))
+(newline)
+(display (number->string -1))
+(newline)
+(display (number->string -3123))
+(newline)

@@ -1,0 +1,30 @@
+case 1: 
+(cons 'a (list 'b 'c 'd)) => (a b c d)
+
+case 2: 
+(cdr (list 'a 'b 'c 'd)) => (b c d)
+
+case 3: 
+l1 => (1 2 3)
+
+case 4: 
+(set-car! l1 7) => #<undisplayable>
+
+case 5: 
+l1 => (7 2 3)
+
+case 6: 
+(set-car! l1 1) => #<undisplayable>
+
+case 7: 
+l1 => (1 2 3)
+
+case 8: 
+(set-cdr! (cddr l1) l2) => #<undisplayable>
+
+case 9: 
+l2 => (4 5 6)
+
+case 10: 
+l1 => (1 2 3 4 5 6)
+

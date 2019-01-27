@@ -1,0 +1,48 @@
+case 1: 
+(string<=? "asdf1" "asdf1") => #t
+
+case 2: 
+(string<=? "asdf1asdf" "asdf1") => #f
+
+case 3: 
+(string<=? "asdf1" "asdf1asdf") => #t
+
+case 4: 
+(string<=? "asdf" "asdf1") => #t
+
+case 5: 
+(string<=? "asdf1" "asdf") => #f
+
+case 6: 
+(string>=? "asdf1" "asdf1") => #t
+
+case 7: 
+(string>=? "asdf1asdf" "asdf1") => #t
+
+case 8: 
+(string>=? "asdf1" "asdf1asdf") => #f
+
+case 9: 
+(string>=? "asdf1" "asdf0") => #t
+
+case 10: 
+(string>=? "asdf0" "asdf1") => #f
+
+case 11: 
+(string-ci<? "asdf0" "ASDF1") => #t
+
+case 12: 
+(string-ci<? "asdf0asdf" "ASDF1") => #t
+
+case 13: 
+(string-ci<? "asdf0" "ASDF1asdf") => #t
+
+case 14: 
+(string-ci<? "asdf1asdf" "ASDF1") => #f
+
+case 15: 
+(string-ci<? "asdf1" "ASDF1asdf") => #t
+
+case 16: 
+(string-ci>? "asdf1" "AsDf0") => #t
+

@@ -1,0 +1,162 @@
+;; rtlheap.sasm
+;; Heap stub routines to interface to the compiler system
+
+(export rtl-malloc)
+(export cp-rtl-base-malloc)
+(export cp-rtl-array-malloc)
+(export cp-rtl-array-length)
+(export rtl-array-length)
+
+(extern mm-malloc)
+(extern mm-fixed-malloc)
+(extern gc-invoke)
+;; These symbols are defined by either interp-rtlheap or c-rtlheap.
+(extern cp-rtl-malloc-failed)
+(extern cp-rtl-malloc)
+
+;; This represents the base (lowest address) of the user code's stack,
+;; so the garbage collector will start here when marking pointers in the
+;; stack.  This is set on entry to the memory management code so that
+;; the stack usage of the memory-management code itself does not cause
+;; artificial root pointers to be created.
+(export gc-root-stack-base)
+(global gc-root-stack-base (const 0))
+
+;; callee-pop wrapper for mm-malloc
+(function (name rtl-malloc)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (push (arg 0))
+                (perform (op call) (const cp-rtl-malloc))
+
+                (perform (op pop-frame))
+                (return)))
+
+;; callee-pop wrapper for cp-rtl-array-length
+(function (name rtl-array-length)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (push (arg 0))
+                (perform (op call) (const cp-rtl-array-length))
+
+                (perform (op pop-frame))
+                (return)))
+
+(function (name cp-rtl-base-malloc)
+          (locals 0)
+          (body (assign (reg operand) (sys stack-pointer))
+                (assign (reg accum) (const gc-root-stack-base))
+                (perform (op store-array) (reg accum) (const 0) (reg operand))
+                ;; This represents the entry into the memory management module.
+                ;; The stack memory above the current stack pointer is entirely in the
+                ;; user's control, and the stack that will be built below this
+                ;; point is only relevant to GC and heap management.  Therefore
+                ;; we will set the stack base to this location, so that GC will
+                ;; only mark roots in the user code's space.
+                ;;
+                ;; NOTE This is done before the frame is pushed for a good reason!
+                ;; Otherwise the stack base would include the locals of this function.
+
+                (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                ;; Check to see if the requested allocation will fit in the
+                ;; fixed-size heap
+                (assign (temp test) (op less-than-or-equal) (arg 0) (const 16))
+                (branch-zero (label cp-rtl-base-malloc/bigalloc) (temp test))
+
+                ;; It will; attempt to allocate from the fixed-size heap
+                (push (arg 0))
+                (perform (op call) (const mm-fixed-malloc))
+                (assign (temp pointer) (reg accum))
+                (branch-nonzero (label cp-rtl-base-malloc/nogc) (temp pointer))
+
+                ;; It fits in the fixed-size heap, but that heap is full. 
+                ;; Let's try to GC it before we move on to the var-heap.
+                (perform (op call) (const gc-invoke))
+                (push (arg 0))
+                (perform (op call) (const mm-fixed-malloc))
+                (assign (temp pointer) (reg accum))
+                (branch-nonzero (label cp-rtl-base-malloc/nogc) (temp pointer))
+
+                ;; The small heap is full.  Try the big heap before
+                ;; we bail out.  We'll just fall right through to
+                ;; the 'bigalloc' label.
+
+                (label cp-rtl-base-malloc/bigalloc)
+
+                ;; Well, the small heap didn't work out.  Attempt to
+                ;; alloc from the variable-sized heap.
+
+                (push (arg 0))
+                (perform (op call) (const mm-malloc))
+                (assign (temp pointer) (reg accum))
+
+                ;; If malloc succeeded, just return the result.
+
+                (branch-nonzero (label cp-rtl-base-malloc/nogc) (temp pointer))
+
+                ;; Malloc didn't succeed; let's GC the heap and try
+                ;; again.
+
+                (perform (op call) (const gc-invoke))
+                (push (arg 0))
+                (perform (op call) (const mm-malloc))
+                (assign (temp pointer) (reg accum))
+                (branch-nonzero (label cp-rtl-base-malloc/nogc) (temp pointer))
+
+                ;; Even after the GC, we still failed.  Nothing
+                ;; to do except bail out or expand the heap.
+
+                (push (arg 0))
+                (perform (op call) (const cp-rtl-malloc-failed))
+
+                ;; This should be unreachable.  We do not expect
+                ;; the cp-rtl-malloc-failed function to return.
+
+                (label cp-rtl-base-malloc/nogc)
+
+                ;; Done! We got a pointer from malloc.  Loop
+                ;; through the buffer and zero it out.
+
+                (assign (temp index) (const 0))
+                (label cp-rtl-base-malloc/beginzero)
+                (assign (temp test) (op less-than) (temp index) (arg 0))
+                (branch-zero (label cp-rtl-base-malloc/endzero) (temp test))
+                (perform (op store-array) (temp pointer) (temp index) (const 0))
+                (assign (temp index) (op add) (temp index) (const 1))
+                (goto (label cp-rtl-base-malloc/beginzero))
+
+                (label cp-rtl-base-malloc/endzero)
+                (assign (reg accum) (temp pointer))
+                (perform (op pop-frame))
+                (return (const 1))))
+
+(function (name cp-rtl-array-malloc)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (temp push-value) (op add) (arg 0) (const 2))
+                (push (temp push-value))
+                (perform (op call) (const cp-rtl-malloc))
+                (perform (op store-array) (reg accum) (const 0) (arg 0))
+                (perform (op store-array) (reg accum) (const 1) (const #x80000000))
+                (assign (reg accum) (op add-pointer) (reg accum) (const 2))
+
+                (perform (op pop-frame))
+                (return (const 1))))
+
+(function (name cp-rtl-array-length)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (reg accum) (op load-array) (arg 0) (const -2))
+
+                (perform (op pop-frame))
+                (return (const 1))))

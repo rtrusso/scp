@@ -1,0 +1,25 @@
+;; externs: cp-mj-array-length cp-mj-malloc cp-mj-system-out-println
+;; defined: mjrtl-test-main
+;; referenced: cp-mj-malloc cp-mj-array-length cp-mj-system-out-println
+
+
+(extern cp-mj-system-out-println)
+(extern cp-mj-malloc)
+(extern cp-mj-array-length)
+(entry @main:mjrtl-test-main)
+(function
+  (name @main:mjrtl-test-main)
+  (locals 0)
+  (body
+    (perform (op push-frame))
+    (perform (op reserve-locals) (const 0))
+    (push (const 3))
+    (perform (op call) (label cp-mj-malloc))
+    (push (reg accum))
+    (perform (op call) (label cp-mj-array-length))
+    (push (reg accum))
+    (perform (op call) (label cp-mj-system-out-println))
+    (perform (op pop-frame))
+    (return (const 0))
+    ))
+

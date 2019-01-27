@@ -1,0 +1,54 @@
+case 1: 
+(list? (quote a)) => #f
+
+case 2: 
+(list? (quote (a))) => #t
+
+case 3: 
+(list? (quote (a . b))) => #f
+
+case 4: 
+(list? (quote (a (b c) d))) => #t
+
+case 5: 
+(list? 3) => #f
+
+case 6: 
+(list? (make-vector 3)) => #f
+
+case 7: 
+(append (quote (a b)) (quote (c d e))) => (a b c d e)
+
+case 8: 
+(reverse (quote (a b c))) => (c b a)
+
+case 9: 
+(list-tail (quote (a b c d)) 2) => (c d)
+
+case 10: 
+(list-ref (quote (a b (c d))) 2) => (c d)
+
+case 11: 
+(memq (quote b) (quote (a b c))) => (b c)
+
+case 12: 
+(memq (quote (b)) (quote (a (b) c))) => #f
+
+case 13: 
+(memv (quote b) (quote (a b c))) => (b c)
+
+case 14: 
+(memv (quote (b)) (quote (a (b) c))) => #f
+
+case 15: 
+(member (quote (b)) (quote (a (b) c))) => ((b) c)
+
+case 16: 
+(assq (quote b) (quote ((a . 1) (b . 2) (c . 3)))) => (b . 2)
+
+case 17: 
+(assv (quote b) (quote ((a . 1) (b . 2) (c . 3)))) => (b . 2)
+
+case 18: 
+(assoc (quote b) (quote ((a . 1) (b . 2) (c . 3)))) => (b . 2)
+

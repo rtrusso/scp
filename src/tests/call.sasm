@@ -1,0 +1,28 @@
+;; sasm program to test procedure calls expressions
+(entry my-main-function)
+(extern mj-system-out-println)
+
+(export mm-rtl-heap-begin-mark-global-vars)
+(export mm-rtl-heap-end-mark-global-vars)
+
+(global mm-rtl-heap-begin-mark-global-vars (const 0))
+(global mm-rtl-heap-end-mark-global-vars (const 0))
+
+(function (name my-test-function)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+                (assign (reg accum) (const 3))
+                (assign (reg accum) (op mul) (reg accum) (const 5))
+                (push (reg accum))
+                (perform (op call) (const mj-system-out-println))
+                (perform (op pop-frame))
+                (return (const 0))))
+
+(function (name my-main-function)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+                (perform (op call) (label my-test-function))
+                (perform (op pop-frame))
+                (return (const 0))))

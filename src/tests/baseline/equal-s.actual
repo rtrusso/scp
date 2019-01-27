@@ -1,0 +1,36 @@
+case 1: 
+(equal? (quote (a b c)) (quote a)) => #f
+
+case 2: 
+(equal? (quote (a b c)) (quote (a b c))) => #t
+
+case 3: 
+(equal? (quote (a (b c) d)) (quote (a (b c) d))) => #t
+
+case 4: 
+(equal? (quote (a b c d)) (quote (a (b c) d))) => #f
+
+case 5: 
+(equal? (quote (a b c d)) #((quote a) (quote b) (quote c) (quote d))) => #f
+
+case 6: 
+(equal? (quote (a b c d e f g)) (quote (a b c d e f))) => #f
+
+case 7: 
+(equal? (quote (a b c d e f 1)) (quote (a b c d e f #\1))) => #f
+
+case 8: 
+(equal? 1 1) => #t
+
+case 9: 
+(equal? 1 2) => #f
+
+case 10: 
+(equal? (quote a) 1) => #f
+
+case 11: 
+(equal? (quote a) (quote a)) => #t
+
+case 12: 
+(equal? 1 (- 2 1)) => #t
+

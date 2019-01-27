@@ -1,0 +1,13 @@
+(define (func a . b)
+  (display 456)
+  (newline)
+  (display a)
+  (newline)
+  (display 123)
+  (newline))
+
+(display 0)
+(newline)
+(func 0)
+(func 1 2)
+(func 2 3 4)

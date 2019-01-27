@@ -1,0 +1,25 @@
+case 1: 
+(write asdf) => "asdf"
+
+case 2: 
+(write 'a) => a
+
+case 3: 
+(write (make-vector 3 0)) => #(0 0 0)
+
+case 4: 
+(write asdf (current-output-port)) => "asdf"
+
+case 5: 
+(write (make-vector 3 0) (current-output-port)) => #(0 0 0)
+
+case 6: 
+(write asdf (current-output-port) (current-output-port)) => "asdf"
+
+case 7: 
+(write 
+) => #\newline
+
+case 8: 
+(write '(asdf jkl 3 5 7 0 z)) => ("asdf" jkl 3 5 7 #\0 #\z)
+

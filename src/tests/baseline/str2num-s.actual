@@ -1,0 +1,51 @@
+case 1: 
+(string->number 123) => 123
+
+case 2: 
+(string->number -123) => -123
+
+case 3: 
+(string->number 1234567890) => 1234567890
+
+case 4: 
+(string->number -1234567890) => -1234567890
+
+case 5: 
+(string->number 1234567890 16) => 878082192
+
+case 6: 
+(string->number 12345678 16) => 305419896
+
+case 7: 
+(string->number -1) => -1
+
+case 8: 
+(string->number 1-6) => #f
+
+case 9: 
+(string->number 16-) => #f
+
+case 10: 
+(string->number -16-) => #f
+
+case 11: 
+(string->number 0) => 0
+
+case 12: 
+(string->number -0) => 0
+
+case 13: 
+(string->number 16 10) => 16
+
+case 14: 
+(string->number 16 16) => 22
+
+case 15: 
+(string->number abCD0 16) => 703696
+
+case 16: 
+(string->number 1a0 16) => 416
+
+case 17: 
+(string->number 1a0 10) => #f
+

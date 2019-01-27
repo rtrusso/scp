@@ -1,0 +1,17 @@
+read: 
+"\t\r\nfoobarbaz\t\r\n"
+  #\tab -> #x9
+  #\carriage-return -> #xd
+  #\newline -> #xa
+  #\f -> #x66
+  #\o -> #x6f
+  #\o -> #x6f
+  #\b -> #x62
+  #\a -> #x61
+  #\r -> #x72
+  #\b -> #x62
+  #\a -> #x61
+  #\z -> #x7a
+  #\tab -> #x9
+  #\carriage-return -> #xd
+  #\newline -> #xa

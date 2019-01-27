@@ -1,0 +1,43 @@
+(define *unspecified*
+  (let ((a #f))
+    (set! a #t)))
+
+(define (tag type obj)
+  (if (not (symbol? type)) (error "Expecting symbol -- TAG" type))
+  (cons (cons obj type) *unspecified*))
+
+(define (get-tag obj)
+  (cond ((string? obj) '<string>)
+        ((symbol? obj) '<symbol>)
+        ((number? obj) '<number>)
+        ((vector? obj) '<vector>)
+        ((char? obj) '<character>)
+        ((procedure? obj) '<procedure>)
+        ((or (eqv? #t obj) (eqv? #f obj)) '<bool>)
+        ((and (input-port? obj) (output-port? obj)) '<input-output-port>)
+        ((input-port? obj) '<input-port>)
+        ((output-port? obj) '<output-port>)
+        ((and (pair? obj) 
+              (eq? *unspecified* (cdr obj))
+              (pair? (car obj))
+              (symbol? (cdar obj))) (cdar obj))
+        ((list? obj) '<list>)
+        ((pair? obj) '<pair>)
+        (else '<unspecified>)))
+
+(define (contents tagged-obj)
+  (if (and (pair? tagged-obj) 
+           (eq? *unspecified* (cdr tagged-obj))
+           (pair? (car tagged-obj))
+           (symbol? (cdar tagged-obj)))
+      (caar tagged-obj)
+      tagged-obj))
+
+(define (safe-contents exp-tag obj)
+  (if (not (eqv? exp-tag (get-tag obj)))
+      (error "Expected object of type " exp-tag 
+             "; received " (get-tag obj) obj))
+  (contents obj))
+
+(define (tagged? tag obj)
+  (eqv? tag (get-tag obj)))

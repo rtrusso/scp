@@ -1,0 +1,17 @@
+(extern $scheme-entry:rtl/r5rs-wrap)
+(extern $scheme-entry:rtl/r5rs-library)
+(extern $scheme-entry:scheme-main)
+(export $sasm-scheme-main)
+(entry $sasm-scheme-main)
+(function
+ (name $sasm-scheme-main)
+ (locals 0)
+ (body
+  (perform (op push-frame))
+  (perform (op reserve-locals) (const 0))
+  (perform (op call) (const $scheme-entry:rtl/r5rs-wrap))
+  (perform (op call) (const $scheme-entry:rtl/r5rs-library))
+  (perform (op call) (const $scheme-entry:scheme-main))
+  (perform (op pop-frame))
+  (return (const 0))
+  ))

@@ -1,0 +1,97 @@
+(include "mm-param.sasm")
+(include "gc-defines.sasm")
+(include "gc-externs.sasm")
+
+(extern gc-invoke)
+(extern gc-mark-stack-roots)
+(extern gc-mark-memory-range)
+(extern gc-sweep)
+
+(export c-gc-invoke)
+(export c-gc-mark-stack-roots)
+(export c-gc-mark-memory-range)
+(export c-gc-sweep)
+
+;; wrappers to call from C
+
+(function (name c-gc-invoke)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (save (reg operand))
+                (save (reg index))
+                (save (reg link))
+                (save (reg pointer))
+
+                (perform (op call) (const gc-invoke))
+
+                (restore (reg pointer))
+                (restore (reg link))
+                (restore (reg index))
+                (restore (reg operand))
+
+                (perform (op pop-frame))
+                (return)))
+
+(function (name c-gc-mark-stack-roots)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (save (reg operand))
+                (save (reg index))
+                (save (reg link))
+                (save (reg pointer))
+
+                (perform (op call) (const gc-mark-stack-roots))
+
+                (restore (reg pointer))
+                (restore (reg link))
+                (restore (reg index))
+                (restore (reg operand))
+
+                (perform (op pop-frame))
+                (return)))
+
+(function (name c-gc-mark-memory-range)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (save (reg operand))
+                (save (reg index))
+                (save (reg link))
+                (save (reg pointer))
+
+                (push (arg 1))
+                (push (arg 0))
+                (perform (op call) (const gc-mark-memory-range))
+
+                (restore (reg pointer))
+                (restore (reg link))
+                (restore (reg index))
+                (restore (reg operand))
+
+                (perform (op pop-frame))
+                (return)))
+
+(function (name c-gc-sweep)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (save (reg operand))
+                (save (reg index))
+                (save (reg link))
+                (save (reg pointer))
+
+                (perform (op call) (const gc-sweep))
+
+                (restore (reg pointer))
+                (restore (reg link))
+                (restore (reg index))
+                (restore (reg operand))
+
+                (perform (op pop-frame))
+                (return)))

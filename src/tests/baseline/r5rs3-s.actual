@@ -1,0 +1,33 @@
+case 1: 
+(vector->list #(1 2 3)) => (1 2 3)
+
+case 2: 
+(list->vector (list 1 2 3)) => #(1 2 3)
+
+case 3: 
+x => #(0 0 0 0 0)
+
+case 4: 
+(vector-fill! x 3) => ()
+
+case 5: 
+x => #(3 3 3 3 3)
+
+case 6: 
+(map (lambda (x) (+ x 1)) (quote (1 2 3 4 5))) => (2 3 4 5 6)
+
+case 7: 
+sum => 0
+
+case 8: 
+(for-each (lambda (x) (set! sum (+ x sum))) (quote (1 2 3 4 5))) => ()
+
+case 9: 
+sum => 15
+
+case 10: 
+(call-with-input-file "tests/read-dat3.scm" (lambda (f) (list (input-port? f) (read f)))) => (#t (asdf))
+
+case 11: 
+(call-with-output-file (vector-ref *argv* 1) (lambda (f) (write (quote (asdf)) f) (output-port? f))) => #t
+

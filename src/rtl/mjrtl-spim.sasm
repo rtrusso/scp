@@ -1,0 +1,39 @@
+;; mjrtl-mips.sasm
+;; MIPS runtime library for use in SPIM, implemented in MIPS-specific SASM
+
+(export cp-mj-system-out-println)
+(export c-fail-malloc)
+
+(global mjrtl-string-prefix
+        (const :asciiz "@SYSTEM-OUT-PRINTLN "))
+(global mjrtl-string-newline
+        (const :asciiz "\n"))
+(global mjrtl-string-fail
+        (const :asciiz "failed malloc "))
+
+(function (name cp-mj-system-out-println)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (perform (op mips-system-call) (const 4) (label mjrtl-string-prefix))
+                (perform (op mips-system-call) (const 1) (arg 0))
+                (perform (op mips-system-call) (const 4) (label mjrtl-string-newline))
+                (assign (reg accum) (arg 0))
+
+                (perform (op pop-frame))
+                (return (const 1))))
+
+(function (name c-fail-malloc)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (perform (op mips-system-call) (const 4) (label mjrtl-string-fail))
+                (perform (op mips-system-call) (const 1) (arg 0))
+                (perform (op mips-system-call) (const 4) (label mjrtl-string-newline))
+
+                (perform (op mips-system-call) (const 10) (const 0))
+
+                (perform (op pop-frame))
+                (return)))

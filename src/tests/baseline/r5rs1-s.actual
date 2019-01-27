@@ -1,0 +1,81 @@
+case 1: 
+(zero? 1) => #f
+
+case 2: 
+(zero? 0) => #t
+
+case 3: 
+(positive? 0) => #f
+
+case 4: 
+(positive? 1) => #t
+
+case 5: 
+(positive? -1) => #f
+
+case 6: 
+(negative? -33) => #t
+
+case 7: 
+(negative? 0) => #f
+
+case 8: 
+(negative? 1) => #f
+
+case 9: 
+(max 1 2 6 3 4 5) => 6
+
+case 10: 
+(apply max 3 4 (quote ())) => 4
+
+case 11: 
+(apply max 4 (quote ())) => 4
+
+case 12: 
+(min 6 5 4 7 1 8 9) => 1
+
+case 13: 
+(apply min 3 4 (quote ())) => 3
+
+case 14: 
+(apply min 4 (quote ())) => 4
+
+case 15: 
+(abs 1) => 1
+
+case 16: 
+(abs -1) => 1
+
+case 17: 
+(abs 0) => 0
+
+case 18: 
+(not 1) => #f
+
+case 19: 
+(not #f) => #t
+
+case 20: 
+(not #t) => #f
+
+case 21: 
+(not "asdf") => #f
+
+case 22: 
+(boolean? #t) => #t
+
+case 23: 
+(boolean? #f) => #t
+
+case 24: 
+(boolean? boolean?) => #f
+
+case 25: 
+(null? #f) => #f
+
+case 26: 
+(null? (list (quote a))) => #f
+
+case 27: 
+(null? (quote ())) => #t
+

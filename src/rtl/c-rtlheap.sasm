@@ -1,0 +1,147 @@
+;; c-rtlheap.sasm
+;; Heap stub routines to interface the C stub to the compiler system
+
+(export cp-rtl-malloc-failed)
+(export rtl-gc-mark-pointer)
+(export cp-rtl-malloc)
+(export cp-rtl-mark-all-roots)
+(export cp-rtl-add-global-root-range)
+
+(extern gc-mark-pointer)
+(extern gc-mark-stack-roots)
+(extern mm-rtl-heap-end-mark-global-vars)
+(extern mm-rtl-heap-begin-mark-global-vars)
+(extern gc-mark-memory-range)
+(extern cp-rtl-base-malloc)
+(extern c-fail-malloc)
+(extern c-fail-add-heap)
+
+(global rtl-global-var-roots (const 0))
+
+(function (name cp-rtl-add-global-root-range)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                ;; arg 0 - start of the range
+                ;; deprecated - arg 1 - end of the range
+                ;;
+                ;; rtl-global-var-roots is a linked list of all of the
+                ;; ranges of global variables.
+                ;;
+                ;;    offset 0 - free space to store the next range pointer
+                ;;    offset 1 - end pointer (should already be filled in statically by codegen)
+                ;;
+                (assign (reg accum) (arg 0))
+
+                ;; check to make sure the next pointer is empty
+                (assign (reg operand) (op load-array) (reg accum) (const 0))
+                (branch-zero (label cp-rtl-add-global-root-range/ok1) (reg operand))
+
+                (perform (op break))
+
+                (label cp-rtl-add-global-root-range/ok1)
+
+                (assign (reg operand) (op load-array) (const rtl-global-var-roots) (const 0))
+                (perform (op store-array) (reg accum) (const 0) (reg operand))
+
+                ;; the following should not be necessary since it
+                ;; should already be filled in by codegen.
+                ;;
+                ;;(perform (op store-array) (temp start) (const 1) (temp end))
+
+                (perform (op store-array) (const rtl-global-var-roots) (const 0) (reg accum))
+
+                (label cp-rtl-add-global-root-range/done)
+                (perform (op pop-frame))
+                (return (const 1))))
+
+(function (name cp-rtl-mark-all-roots)
+          (locals 1)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 1))
+
+                (perform (op call) (label gc-mark-stack-roots))
+
+                (assign (reg accum) (label mm-rtl-heap-end-mark-global-vars))
+                (push (reg accum))
+                (assign (reg accum) (label mm-rtl-heap-begin-mark-global-vars))
+                (push (reg accum))
+                (perform (op call) (label gc-mark-memory-range))
+
+                (assign (reg accum) (op load-array) (const rtl-global-var-roots) (const 0))
+
+                (label cp-rtl-mark-all-roots/globals-loop)
+                (branch-zero (label cp-rtl-mark-all-roots/globals-done) (reg accum))
+
+                ;; the start of the range is 2 pointers past the global vars header:
+                ;;
+                ;;     header_pointer:
+                ;;           <1-pointer>
+                ;;     end_pointer:
+                ;;           <1-pointer> end_mark_globals
+                ;;     data_pointer:  ;; <-- first data pointer here
+                ;;           <N-pointers>
+                ;;     end_mark_globals:
+                ;;
+                (assign (reg index) (op add-pointer) (reg accum) (const 2))
+
+                ;; push the end of the range (arg 2)
+                (assign (reg operand) (op load-array) (reg accum) (const 1))
+                (push (reg operand))
+
+                ;; push the start of the range (arg 1)
+                (push (reg index))
+
+                ;; get the next pointer and save it in a local variable across the function call
+                (assign (reg operand) (op load-array) (reg accum) (const 0))
+                (assign (local 0) (reg operand))
+
+                ;; call the mark-memory-range function
+                (perform (op call) (label gc-mark-memory-range))
+
+                (assign (reg accum) (local 0))
+                (goto (label cp-rtl-mark-all-roots/globals-loop))
+
+                (label cp-rtl-mark-all-roots/globals-done)
+                (perform (op pop-frame))
+                (return (const 0))))
+
+;; Dispatches directly to gc-mark-pointer.
+(function (name rtl-gc-mark-pointer)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (push (arg 0))
+                (perform (op call) (const gc-mark-pointer))
+
+                (perform (op pop-frame))
+                (return (const 0))))
+
+(function (name cp-rtl-malloc-failed)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                ;; Call a C function that will print out an error
+                ;; message and abort.
+                (push (arg 0))
+                (perform (op call) (const c-fail-malloc))
+                (pop (const 1))
+
+                (perform (op pop-frame))
+                (return (const 1))))
+
+(function (name cp-rtl-malloc)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                ;; Call the underlying malloc function, result in accum.
+                (push (arg 0))
+                (perform (op call) (const cp-rtl-base-malloc))
+
+                ;; Done.
+                (perform (op pop-frame))
+                (return (const 1))))

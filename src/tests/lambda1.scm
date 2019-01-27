@@ -1,0 +1,5 @@
+(define (foo x)
+  (foo x)
+  (foo x))
+(display 1)
+(newline)

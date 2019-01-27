@@ -1,0 +1,25 @@
+(need tests/printer)
+(need tests/printer-helper)
+
+(define (go)
+  (let ((p (make-printer 3)))
+    (display "before")
+    (newline)
+    (global-printer 5)
+    (p 5)
+    (let loop ((v (make-vector 1 1))
+               (iter 0))
+      (if (> iter 99999)
+          'done
+          (loop (make-vector 1 1) (+ iter 1))))
+    (display "after")
+    (newline)
+    (p 8)
+    (global-printer 8)
+    ))
+
+(define (outer-go)
+  (go))
+
+(outer-go)
+(go)

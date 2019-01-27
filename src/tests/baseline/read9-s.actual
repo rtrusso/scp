@@ -1,0 +1,18 @@
+index 1: @
+  symbol? #t
+
+index 2: @@
+  symbol? #t
+
+index 3: @@@
+  symbol? #t
+
+index 4: $@
+  symbol? #t
+
+index 5: @$
+  symbol? #t
+
+index 6: (unquote-splicing (foo))
+  symbol? #f
+

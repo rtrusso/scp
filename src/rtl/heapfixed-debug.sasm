@@ -1,0 +1,352 @@
+;; rtl/heapfixed.sasm
+
+(include "mm-param.sasm")
+(include "gc-defines.sasm")
+
+(export cp-mm-fixed-heap-area-malloc)
+(export cp-mm-fixed-heap-area-free)
+(export cp-mm-fixed-heap-area-init)
+(export cp-mm-fixed-heap-area-sweep)
+(export cp-mm-fixed-heap-area-check)
+(extern c-fail-bad-heap-check)
+(extern mj-system-out-println)
+
+(define-symconst
+  (fixed-heap:next-free-entry 0))
+
+(global heap-check-count (const 0))
+
+;; int cp_mm_fixed_heap_area_check( heap *h );
+(function (name cp-mm-fixed-heap-area-check)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (temp free-pages) (const 0))
+                (assign (temp free-page) (op load-array) (arg 0) (symconst fixed-heap:free-list))
+                (label cp-mm-fixed-heap-area-check/start)
+                (branch-zero (label cp-mm-fixed-heap-area-check/done) (temp free-page))
+
+                (assign (temp free-pages) (op add) (temp free-pages) (const 1))
+                (assign (reg accum) (temp free-page))
+                (assign (temp magic) (op load-array) (reg accum) (const 2))
+                (assign (temp check) (op equal-to) (temp magic) (const #xdeadca5e))
+                (branch-nonzero (label cp-mm-fixed-heap-area-check/ok1) (temp check))
+
+                (push (const #x500005ad))
+                (perform (op call) (const mj-system-out-println))
+                (pop (const 1))
+
+                (push (temp free-page))
+                (perform (op call) (const mj-system-out-println))
+                (pop (const 1))
+
+                (push (temp free-pages))
+                (perform (op call) (const mj-system-out-println))
+                (pop (const 1))
+
+                (push (temp magic))
+                (perform (op call) (const mj-system-out-println))
+                (pop (const 1))
+
+                (perform (op call) (const c-fail-bad-heap-check))
+
+                (label cp-mm-fixed-heap-area-check/ok1)
+                (assign (temp magic) (op load-array) (reg accum) (const 1))
+                (assign (temp check1) (op equal-to) (temp magic) (const 9))
+                ;(assign (temp check2) (op equal-to) (temp magic) (const #x10009))
+                ;(assign (temp check) (op bit-or) (temp check1) (temp check2))
+                (branch-nonzero (label cp-mm-fixed-heap-area-check/ok2) (temp check1))
+
+                (push (const #xdeadcad0))
+                (perform (op call) (const mj-system-out-println))
+                (pop (const 1))
+
+                (push (temp free-page))
+                (perform (op call) (const mj-system-out-println))
+                (pop (const 1))
+
+                (push (temp free-pages))
+                (perform (op call) (const mj-system-out-println))
+                (pop (const 1))
+
+                (push (temp magic))
+                (perform (op call) (const mj-system-out-println))
+                (pop (const 1))
+
+                (perform (op call) (const c-fail-bad-heap-check))
+
+                (label cp-mm-fixed-heap-area-check/ok2)
+                (assign (temp free-page) (op load-array) (reg accum) (const 0))
+                (goto (label cp-mm-fixed-heap-area-check/start))
+
+                (label cp-mm-fixed-heap-area-check/done)
+
+                ;; (push (const #xd00df00d))
+                ;; (perform (op call) (const mj-system-out-println))
+                ;; (pop (const 1))
+
+                ;; (push (temp free-pages))
+                ;; (perform (op call) (const mj-system-out-println))
+                ;; (pop (const 1))
+
+                ;; (assign (reg accum) (op load-array) (const heap-check-count) (const 0))
+                ;; (push (reg accum))
+                ;; (perform (op call) (const mj-system-out-println))
+                ;; (pop (const 1))
+
+                ;; (assign (reg accum) (op load-array) (const heap-check-count) (const 0))
+                ;; (assign (reg accum) (op add) (reg accum) (const 1))
+                ;; (perform (op store-array) (const heap-check-count) (const 0) (reg accum))
+
+                (perform (op pop-frame))
+                (return (const 1))))
+
+;; int cp_mm_fixed_heap_area_malloc( heap *h );
+(function (name cp-mm-fixed-heap-area-malloc)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                ;; debug - heap consistency check
+                (push (arg 0))
+                (perform (op call) (const cp-mm-fixed-heap-area-check))
+
+                (assign (reg accum) (op load-array) (arg 0) (symconst fixed-heap:free-list))
+                (branch-zero (label cp-mm-fixed-heap-area-malloc/done) (reg accum))
+
+                (assign (temp magic) (op load-array) (reg accum) (const 2))
+                (assign (temp check) (op equal-to) (temp magic) (const #xdeadca5e))
+                (branch-nonzero (label cp-mm-fixed-heap-area-malloc/ok1) (temp check))
+
+                (perform (op call) (const c-fail-bad-heap-check))
+
+                (label cp-mm-fixed-heap-area-malloc/ok1)
+                (assign (temp magic) (op load-array) (reg accum) (const 1))
+                (assign (temp check) (op equal-to) (temp magic) (const 9))
+                (branch-nonzero (label cp-mm-fixed-heap-area-malloc/ok2) (temp check))
+
+                (push (const #xdeadcade))
+                (perform (op call) (const mj-system-out-println))
+                (pop (const 1))
+
+                (push (temp magic))
+                (perform (op call) (const mj-system-out-println))
+                (pop (const 1))
+
+                (perform (op call) (const c-fail-bad-heap-check))
+
+                (label cp-mm-fixed-heap-area-malloc/ok2)
+                (assign (temp next) (op load-array) (reg accum) (symconst fixed-heap:next-free-entry))
+                (perform (op store-array) (arg 0) (symconst fixed-heap:free-list) (temp next))
+
+                (label cp-mm-fixed-heap-area-malloc/done)
+
+                ;; debug - heap consistency check
+                (save (reg accum))
+                (push (arg 0))
+                (perform (op call) (const cp-mm-fixed-heap-area-check))
+                (restore (reg accum))
+
+                (perform (op pop-frame))
+                (return (const 1))))
+
+;; void cp_mm_fixed_heap_area_free( heap *h, void *ptr );
+(function (name cp-mm-fixed-heap-area-free)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                ;(push (arg 0))
+                ;(perform (op call) (const cp-mm-fixed-heap-area-check))
+
+;                ;; begin debug
+;                (perform (op debug-out) (const "heap-free: ") (arg 0) (const " ") (arg 1))
+                                        ;                ;; end debug
+
+                (perform (op store-array) (arg 1) (const 1) (const 9))
+                (perform (op store-array) (arg 1) (const 2) (const #xdeadca5e))
+
+                (assign (reg accum) (op load-array) (arg 0) (symconst fixed-heap:free-list))
+                (perform (op store-array) (arg 1) (symconst fixed-heap:next-free-entry) (reg accum))
+                (perform (op store-array) (arg 0) (symconst fixed-heap:free-list) (arg 1))
+
+                ;(push (arg 0))
+                ;(perform (op call) (const cp-mm-fixed-heap-area-check))
+
+                (perform (op pop-frame))
+                (return (const 2))))
+
+;;int cp_mm_fixed_heap_area_init( heap *h, size_t chunk, size_t total )
+(function (name cp-mm-fixed-heap-area-init)
+          (locals 0)
+          (body (perform (op push-frame))
+                (perform (op reserve-locals) (const 0))
+
+                (assign (temp temp-ptr) (op add-pointer) (arg 0) (symconst sizeof:fixed-heap))
+                (assign (temp bytes-per-chunk) (op bit-lshift) (arg 1) (symconst shift-cells-per-word))
+                (assign (temp total-bytes) (arg 2))
+                (assign (temp end-buf) (op add) (arg 0) (temp total-bytes))
+
+                (assign (temp shift-words-per-page) (const 0))
+                (assign (reg operand) (arg 1))
+                (label cp-mm-fixed-heap-area-init/swpp)
+                (assign (temp test) (op equal-to) (reg operand) (const 1))
+                (branch-nonzero (label cp-mm-fixed-heap-area-init/swpp-done)
+                                (temp test))
+                (assign (reg operand) (op bit-rshift) (reg operand) (const 1))
+                (assign (temp shift-words-per-page) (op add) (temp shift-words-per-page) (const 1))
+                (goto (label cp-mm-fixed-heap-area-init/swpp))
+                (label cp-mm-fixed-heap-area-init/swpp-done)
+
+                (assign (temp mask-words-per-page) (op sub) (arg 1) (const 1))
+
+                (perform (op store-array) (arg 0) (symconst heap:base) (temp temp-ptr))
+                (perform (op store-array) (arg 0) (symconst heap:limit) (temp end-buf))
+                (perform (op store-array) (arg 0) (symconst heap:object-offset) (const 0))
+                (perform (op store-array) (arg 0) (symconst heap:words-per-page) (arg 1))
+                (perform (op store-array) (arg 0) (symconst heap:shift-words-per-page) (temp shift-words-per-page))
+                (perform (op store-array) (arg 0) (symconst heap:mask-words-per-page) (temp mask-words-per-page))
+                (perform (op store-array) (arg 0) (symconst heap:next) (const 0))
+                (perform (op store-array) (arg 0) (symconst heap:type) (symconst heap-type:fixed-alloc))
+                (perform (op store-array) (arg 0) (symconst fixed-heap:free-list) (temp temp-ptr))
+                (perform (op store-array) (arg 0) (symconst fixed-heap:next-fixed-heap) (const 0))
+
+                (assign (temp buffer) (temp temp-ptr))
+
+                (label cp-mm-fixed-heap-area-init/start)
+                (perform (op store-array) (temp buffer) (const 1) (const 9))
+                (perform (op store-array) (temp buffer) (const 2) (const #xdeadca5e))
+                (assign (temp next) (op add) (temp buffer) (temp bytes-per-chunk))
+                (assign (temp nextnext) (op add) (temp next) (temp bytes-per-chunk))
+                (assign (temp test) (op less-than) (temp next) (temp end-buf))
+                (branch-zero (label cp-mm-fixed-heap-area-init/end) (temp test))
+                (assign (temp test) (op less-than) (temp nextnext) (temp end-buf))
+                (branch-zero (label cp-mm-fixed-heap-area-init/end) (temp test))
+                (perform (op store-array) (temp buffer) (symconst fixed-heap:next-free-entry) (temp next))
+                (assign (temp buffer) (temp next))
+                (goto (label cp-mm-fixed-heap-area-init/start))
+
+                (label cp-mm-fixed-heap-area-init/end)
+                (perform (op store-array) (temp buffer) (symconst fixed-heap:next-free-entry) (const 0))
+
+                ;; debug - heap consistency check
+                (push (arg 0))
+                (perform (op call) (const cp-mm-fixed-heap-area-check))
+
+                (perform (op pop-frame))
+                (return (const 3))))
+
+(function
+ (name cp-mm-fixed-heap-area-sweep)
+ (locals 0)
+ (body (perform (op push-frame))
+       (perform (op reserve-locals) (const 0))
+
+       ;; debug - heap consistency check
+       (push (arg 0))
+       (perform (op call) (const cp-mm-fixed-heap-area-check))
+
+       ;; (push (const #x11111111))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       ;; first walk through the free list and set the GCDW
+       (assign (temp free) (op load-array) (arg 0) (symconst fixed-heap:free-list))
+
+       (label cp-mm-fixed-heap-area-sweep/free-list)
+       (branch-zero (label cp-mm-fixed-heap-area-sweep/free-marked) (temp free))
+       (assign (reg accum) (op load-array) (temp free) (symconst gcdw:offset))
+       (assign (reg accum) (op bit-or) (reg accum) (symconst gcdw:mark-mask))
+       (perform (op store-array) (temp free) (symconst gcdw:offset) (reg accum))
+       (assign (temp free) (op load-array) (temp free) (symconst fixed-heap:next-free-entry))
+       (goto (label cp-mm-fixed-heap-area-sweep/free-list))
+       (label cp-mm-fixed-heap-area-sweep/free-marked)
+
+       ;; now walk through the heap and
+       ;;   1. free non-marked pages
+       ;;   2. un-mark marked pages
+       ;;
+       (assign (temp page) (op load-array) (arg 0) (symconst heap:base))
+       (assign (temp block) (op load-array) (arg 0) (symconst heap:words-per-page))
+       (assign (temp block-cells) (op bit-lshift) (temp block) (symconst shift-cells-per-word))
+       (assign (temp limit) (op load-array) (arg 0) (symconst heap:limit))
+
+       (label cp-mm-fixed-area-sweep/sweep)
+
+       ;; if we've run up to or over the limit, then we're done
+       (assign (temp test) (op less-than) (temp page) (temp limit))
+       (branch-zero (label cp-mm-fixed-area-sweep/sweep-done) (temp test))
+
+       ;; check the GCDW; is this page in use or not?
+       (assign (temp gcdw) (op load-array) (temp page) (symconst gcdw:offset))
+       (assign (temp test) (op bit-and) (temp gcdw) (symconst gcdw:mark-mask))
+       (branch-nonzero (label cp-mm-fixed-area-sweep/page-in-use) (temp test))
+
+
+       ;; debug ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+       ;; (push (const #xdead0001))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop  (const 1))
+
+       ;; (push (temp page))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       ;; (push (temp gcdw))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       ;; (push (temp test))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+       ;; end debug ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+       ;; the page is not in use so free it.
+       (push (temp page))
+       (push (arg 0))
+       (perform (op call) (const cp-mm-fixed-heap-area-free))
+       (goto (label cp-mm-fixed-area-sweep/next-page))
+
+       ;; the page is in use, so clear the GCDW.
+       (label cp-mm-fixed-area-sweep/page-in-use)
+       (assign (temp unmark-mask) (op bit-not) (symconst gcdw:mark-mask))
+       (assign (temp unmarked) (op bit-and) (temp gcdw) (temp unmark-mask))
+
+       ;; debug ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+       ;; (push (const #xdeadcadf))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop  (const 1))
+
+       ;; (push (temp page))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       ;; (push (temp gcdw))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       ;; (push (temp test))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+
+       ;; (push (temp unmarked))
+       ;; (perform (op call) (const mj-system-out-println))
+       ;; (pop (const 1))
+       ;; end debug ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+       (perform (op store-array) (temp page) (symconst gcdw:offset) (temp unmarked))
+
+       ;; loop to the next page
+       (label cp-mm-fixed-area-sweep/next-page)
+       (assign (temp page) (op add) (temp page) (temp block-cells))
+       (goto (label cp-mm-fixed-area-sweep/sweep))
+
+       (label cp-mm-fixed-area-sweep/sweep-done)
+
+       ;; debug - heap consistency check
+       (push (arg 0))
+       (perform (op call) (const cp-mm-fixed-heap-area-check))
+
+       (perform (op pop-frame))
+       (return (const 1))))

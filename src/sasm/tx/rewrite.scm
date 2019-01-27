@@ -1,0 +1,46 @@
+;; instruction rewrite engine ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (rewrite-symbolic-instruction match-environment rewrite-spec)
+  (define (resolve-argument pair)
+    (let ((entry (assoc (car pair) match-environment)))
+      (if (not entry)
+          (error "unable to rewrite instruction -- rewrite-symbolic-instruction"))
+      (cons (car pair)
+            ((cdr pair) (cdr entry)))))
+  (let ((resolved-spec (map resolve-argument (cdr rewrite-spec))))
+    (let ((insn (map (lambda (element)
+                       (cond ((and (list? element)
+                                   (equal? 'replace (car element)))
+                              (cdr (assoc (cadr element) resolved-spec)))
+                             ((and (list? element)
+                                   (equal? 'reg (car element)))
+                              `(reg ,(reverse-lookup-register (cadr element))))
+                             (else
+                              element)))
+                     (car rewrite-spec))))
+      (if (not (useless-insn? insn))
+          (assemble-instruction insn)))))
+
+(define (useless-insn? insn)
+  (and (list? insn)
+       (= 3 (length insn))
+       (equal? 'assign (car insn))
+       (equal? (list-ref insn 1) (list-ref insn 2))))
+
+(define (rewrite-instruction match-environment rewrite-spec)
+  (define (resolve-argument pair)
+    (let ((entry (assoc (car pair) match-environment)))
+      (if (not entry)
+          (error "Unable to rewrite instruction -- REWRITE-INSTRUCTION" match-environment pair))
+      ((cdr pair) (cdr entry))))
+  (if (not (string? (car rewrite-spec)))
+      (rewrite-symbolic-instruction match-environment rewrite-spec)
+      (emit-instruction (apply format (car rewrite-spec) (map resolve-argument (cdr rewrite-spec))))))
+
+(define (match-and-rewrite-instruction instruction machine-entry)
+  (let ((pattern (car machine-entry)))
+    (let ((match (pattern-match pattern instruction)))
+      (and match
+           (for-each (lambda (spec) (rewrite-instruction match spec))
+                     (list-ref machine-entry 1))))))
+

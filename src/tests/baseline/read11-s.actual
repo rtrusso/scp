@@ -1,0 +1,8 @@
+read: 
+(#\a #\newline #\space #\tab #\carriage-return #\z)
+  #\a -> #x61
+  #\newline -> #xa
+  #\space -> #x20
+  #\tab -> #x9
+  #\carriage-return -> #xd
+  #\z -> #x7a

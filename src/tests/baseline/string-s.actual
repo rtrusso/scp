@@ -1,0 +1,42 @@
+case 1: 
+(string #\a #\b #\c) => "abc"
+
+case 2: 
+(string=? "asdf" "jkl") => #f
+
+case 3: 
+(string=? "asdf" "asdf") => #t
+
+case 4: 
+(string=? "asdf45678" "asdf") => #f
+
+case 5: 
+(string=? "asdf" "asdf45678") => #f
+
+case 6: 
+(string=? "asdf" "Asdf") => #f
+
+case 7: 
+(string-ci=? "asdf" "AsDf") => #t
+
+case 8: 
+(string<? "asdf0" "asdf1") => #t
+
+case 9: 
+(string<? "asdf1" "asdf") => #f
+
+case 10: 
+(string<? "asdfghjkl1" "asdf") => #f
+
+case 11: 
+(string<? "asdf" "asdfjkl1") => #t
+
+case 12: 
+(string>? "asdf1" "asdf0") => #t
+
+case 13: 
+(string>? "asdfhjkl1" "asdf") => #t
+
+case 14: 
+(string>? "asdf" "asdfhjkl1") => #f
+

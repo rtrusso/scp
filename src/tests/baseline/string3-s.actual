@@ -1,0 +1,51 @@
+case 1: 
+(string-ci<=? "asdf0" "ASdf0") => #t
+
+case 2: 
+(string-ci<=? "asdf0asdf" "ASdf0") => #f
+
+case 3: 
+(string-ci<=? "asdf0" "ASdf0asdf") => #t
+
+case 4: 
+(string-ci<=? "asdf0" "ASdf1") => #t
+
+case 5: 
+(string-ci<=? "asdf1" "ASdf0") => #f
+
+case 6: 
+(string-ci>=? "AsDf1" "aSdF0") => #t
+
+case 7: 
+(string-ci>=? "AsDf1asdf" "aSdF1") => #t
+
+case 8: 
+(string-ci>=? "AsDf1" "aSdF1asdf") => #f
+
+case 9: 
+(string-ci>=? "AsDf0" "aSdF1") => #f
+
+case 10: 
+(substring "asdf" 2 3) => "d"
+
+case 11: 
+(string-append "asdf" "jkl") => "asdfjkl"
+
+case 12: 
+(string->list "asdf") => (#\a #\s #\d #\f)
+
+case 13: 
+(list->string (list #\a #\b #\c #\d)) => "abcd"
+
+case 14: 
+(string-copy "asdf") => "asdf"
+
+case 15: 
+x => "abcd"
+
+case 16: 
+(string-fill! x #\z) => ()
+
+case 17: 
+x => "zzzz"
+

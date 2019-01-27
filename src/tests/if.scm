@@ -1,0 +1,5 @@
+(display (if '() 'nil-true 'nil-false))
+(newline)
+(define x 1)
+(display (if (set! x #f) 'set-true 'set-false))
+(newline)

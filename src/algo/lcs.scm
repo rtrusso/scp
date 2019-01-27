@@ -1,0 +1,20 @@
+(define (lcs-recursive s1 s2)
+  (define (rest s) (substring s 1 (string-length s)))
+  (cond ((or (zero? (string-length s1))
+             (zero? (string-length s2)))
+         0)
+        ((char=? (string-ref s1 0)
+                 (string-ref s2 0))
+         (+ 1 (lcs-recursive (rest s1) (rest s2))))
+        (else
+         (max (lcs-recursive (rest s1) s2)
+              (lcs-recursive s1 (rest s2))))))
+
+(define (lcs-dp s1 s2)
+  (define table (make-vector (* (string-length s1)
+                                (string-legnth s2)) 0))
+  (define (get i j)
+    (vector-ref table (+ (* j (string-length s2)) i)))
+  (define (set! i j v)
+    (vector-set! table (+ (* j (string-length s2)) i) v))
+  (

@@ -1,0 +1,12 @@
+(define foo 3)
+(set! foo 5)
+(display foo)
+(newline)
+(define x
+  (let ((foo 3))
+    (lambda ()
+      (set! foo (+ foo 1))
+      (display foo)
+      (newline))))
+(x)
+(x)

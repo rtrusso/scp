@@ -1,0 +1,20 @@
+(include "mm-param.sasm")
+(include "gc-defines.sasm")
+(include "gc-externs.sasm")
+
+(export gc-invoke)
+(extern gc-sweep)
+(extern cp-rtl-mark-all-roots)
+
+(function
+ (name gc-invoke)
+ (locals 0)
+ (body (perform (op push-frame))
+       (perform (op reserve-locals) (const 0))
+
+       (perform (op call) (const cp-rtl-mark-all-roots))
+       (perform (op call) (const gc-sweep))
+
+       (perform (op pop-frame))
+       (return (const 0))))
+
