@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sasm.h>
@@ -174,5 +177,19 @@ int SYM(c_scheme_current_seconds)() {
 } /* c_scheme_current_seconds */
 
 int SYM(c_scheme_current_milliseconds)() {
+#ifdef _WIN32
     return (int)GetTickCount();
+#else
+    struct timespec ts;
+    long nanosec;
+    long microsec;
+    long millisec;
+    
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    nanosec = ts.tv_nsec;
+    microsec = nanosec / 1000;
+    millisec = microsec / 1000;
+    millisec += ts.tv_sec * 1000;
+    return millisec;
+#endif
 }

@@ -1,5 +1,6 @@
 out/
 gmon.out
+nohup.out
 all
 critical-test
 *~

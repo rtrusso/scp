@@ -1848,7 +1848,7 @@ static int token(scheme *sc) {
           return (TOK_RPAREN);
      case '.':
           c=inchar(sc);
-          if(is_one_of(" \n\t",c)) {
+          if(is_one_of(" \r\n\t",c)) {
                return (TOK_DOT);
           } else {
                backchar(sc,c);

@@ -72,3 +72,31 @@ the Windows port of Git, so also check the usr\bin directory of the
 Git install for some tools, including diff.
 
 See [NASM](https://www.nasm.us/) for The Netwide Assembler.
+
+## Tested Dependency Versions on Linux
+
+The project was tested on the following dependency component versions.
+
+    $ uname -a
+    Linux schemer 3.16.0-4-686-pae #1 SMP Debian 3.16.7-ckt20-1+deb8u3 (2016-01-17) i686 GNU/Linux
+
+    $ make --version
+    GNU Make 4.0
+    Built for i586-pc-linux-gnu
+
+    $ gcc --version
+    gcc (Debian 4.9.2-10+deb8u2) 4.9.2
+
+    $ ar --version
+    GNU ar (GNU Binutils for Debian) 2.25
+
+    $ diff --version
+    diff (GNU diffutils) 3.3
+
+    $ nasm -version
+    NASM version 2.11.05 compiled on Sep  9 2014
+
+
+On Debian GNU/Linux, all of these components can be installed with
+`apt`.
+
