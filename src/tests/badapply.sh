@@ -1,2 +1,2 @@
-out/bootstrap/test/badapply.exe
+./out/bootstrap/test/badapply.exe
 echo $?

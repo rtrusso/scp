@@ -1143,12 +1143,12 @@ out/bootstrap/test/badapply.o: out/bootstrap/test/badapply.asm
 out/bootstrap/test/badapply.exe: out/bootstrap/test/badapply.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
-out/bootstrap/test/badapply.out: out/bootstrap/test/badapply.exe tests/badapply.cmd
-	./tests/badapply.cmd>$@.tmp
+out/bootstrap/test/badapply.out: out/bootstrap/test/badapply.exe tests/badapply.sh
+	./tests/badapply.sh>$@.tmp
 	mv $@.tmp $@
 
-out/bootstrap/test/badapply.diff: out/bootstrap/test/badapply.out tests/baseline/badapply-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/badapply.out tests/baseline/badapply-s.actual
+out/bootstrap/test/badapply.diff: out/bootstrap/test/badapply.out tests/baseline/badapply-s-linux.actual
+	diff --strip-trailing-cr out/bootstrap/test/badapply.out tests/baseline/badapply-s-linux.actual
 	touch out/bootstrap/test/badapply.diff
 
 out/bootstrap/test/badvrhi.out: out/bootstrap/test/badvrhi.exe tests/badvrhi.sh
