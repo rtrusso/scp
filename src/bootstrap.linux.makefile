@@ -3,7 +3,7 @@ include sasm-opt.dep
 include scheme-compiler.dep
 include java-compiler.dep
 
-# Depends on the following environment variables which are expected to be set by running go.cmd or env.cmd:
+# Depends on the following environment variables which are expected to be set by running go.sh or env.sh:
 #
 # TINYSCHEMEINIT=../bootstrap/tinyscheme-1.41/init.scm
 # SCHEME=../bootstrap/tinyscheme-1.41/scheme.exe -1
@@ -384,15 +384,15 @@ DEPEND_ALL=\
   $(DEPEND_JAVA_GC_TEST_FILES) \
   $(DEPEND_SCHEMEC_TEST_MARKER) \
   \
-  out/bootstrap-sasm-ts.cmd \
+  out/bootstrap-sasm-ts.sh \
   out/sasm-bootstrap.out \
   out/bootstrap/sasm.exe \
   \
-  out/bootstrap-sasm-opt-ts.cmd \
+  out/bootstrap-sasm-opt-ts.sh \
   out/sasm-opt-bootstrap.out \
   out/bootstrap/sasm-opt.exe \
   \
-  out/bootstrap-scheme-compiler-ts.cmd \
+  out/bootstrap-scheme-compiler-ts.sh \
   out/scheme-compiler-bootstrap.out \
   out/bootstrap/schemec.exe
 

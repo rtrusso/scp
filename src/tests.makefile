@@ -2,8 +2,6 @@ POSITIVE_SCHEME_TESTS=\
   out/$(TEST_OUTDIR_NAME)/test/apply.sasm \
   out/$(TEST_OUTDIR_NAME)/test/apply.sasm-opt \
   out/$(TEST_OUTDIR_NAME)/test/apply.asm \
-  out/$(TEST_OUTDIR_NAME)/test/apply.obj \
-  out/$(TEST_OUTDIR_NAME)/test/apply.exe \
   out/$(TEST_OUTDIR_NAME)/test/apply.out \
   out/$(TEST_OUTDIR_NAME)/test/apply.diff \
   out/$(TEST_OUTDIR_NAME)/test/cseconds.out \
