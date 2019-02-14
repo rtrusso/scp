@@ -1,5 +1,7 @@
 # Quick Start
 
+Use the following steps to bootstrap and validate the compiler.
+
 ## Windows
 
 - Ensure GCC, GNU make, NASM, diff in path
@@ -10,9 +12,8 @@
 - apt-get install gcc make nasm diffutils
 - run ./src/go.sh
 
-The Linux build is still a work in progress. Since this will take a
-long time, consider running go.sh under nohup and/or in the
-background.
+Since this will take a long time, consider running go.sh under nohup
+and/or in the background.
 
 # Sunnyvale Compiler Platform
 

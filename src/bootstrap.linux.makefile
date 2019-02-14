@@ -396,8 +396,7 @@ DEPEND_ALL=\
   out/scheme-compiler-bootstrap.out \
   out/bootstrap/schemec.exe
 
-all: $(DEPEND_ALL)
-	echo done>all
+bootstrap_all: $(DEPEND_ALL)
 
 .SECONDARY:
 
