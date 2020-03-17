@@ -49,7 +49,9 @@ JAVAC=$(SCHEME) $(JAVAC_FLAT_TS)
 
 GLUEC_FLAT_TS=out/scheme-gluec-flat-ts.scm
 GLUEC=$(SCHEME) $(GLUEC_FLAT_TS)
-SCHEME_CFLAGS=-DSCHEME_RTL=1
+CFLAGS=-g -fno-pie -no-pie -m32
+SCHEME_CFLAGS=-DSCHEME_RTL=1 $(CFLAGS)
+NASM_FLAGS=-felf32
 
 SCHEME_RTL=\
   out/bootstrap/r5rs-library.sasm \
@@ -479,10 +481,10 @@ out/bootstrap/test/java/%.asm: out/bootstrap/test/java/%.sasm-opt $(DEPEND_SASMC
 	$(SASMC) $< --out=$@
 
 out/bootstrap/test/java/%.o: out/bootstrap/test/java/%.asm
-	nasm -felf32 $< -o $@
+	nasm $(NASM_FLAGS) $< -o $@
 
 out/bootstrap/test/java/%.exe: out/bootstrap/test/java/%.o rtl/mjrtl.c $(DEPEND_MJ_RTL)
-	gcc -Irtl rtl/mjrtl.c $(DEPEND_MJ_RTL_OBJS) $< -o $@
+	gcc $(CFLAGS) -Irtl rtl/mjrtl.c $(DEPEND_MJ_RTL_OBJS) $< -o $@
 
 out/bootstrap/test/java/%.out: out/bootstrap/test/java/%.exe
 	$< >$@.tmp
@@ -502,10 +504,10 @@ out/bootstrap/test/java/gc/%.asm: out/bootstrap/test/java/gc/%.sasm-opt $(DEPEND
 	$(SASMC) $< --out=$@
 
 out/bootstrap/test/java/gc/%.o: out/bootstrap/test/java/gc/%.asm
-	nasm -felf32 $< -o $@
+	nasm $(NASM_FLAGS) $< -o $@
 
 out/bootstrap/test/java/gc/%.exe: out/bootstrap/test/java/gc/%.o rtl/mjrtl.c $(DEPEND_MJ_RTL)
-	gcc -Irtl rtl/mjrtl.c $(DEPEND_MJ_RTL_OBJS) $< -o $@
+	gcc $(CFLAGS) -Irtl rtl/mjrtl.c $(DEPEND_MJ_RTL_OBJS) $< -o $@
 
 out/bootstrap/test/java/gc/%.out: out/bootstrap/test/java/gc/%.exe
 	$< >$@.tmp
@@ -525,10 +527,10 @@ out/bootstrap/test/call.asm: out/bootstrap/test/call.sasm-opt $(DEPEND_SASMC) $(
 	$(SASMC) out/bootstrap/test/call.sasm-opt --out=out/bootstrap/test/call.asm
 
 out/bootstrap/test/call.o: out/bootstrap/test/call.asm
-	nasm -felf32 out/bootstrap/test/call.asm -o out/bootstrap/test/call.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/call.asm -o out/bootstrap/test/call.o
 
 out/bootstrap/test/call.exe: out/bootstrap/test/call.o rtl/mjrtl.c
-	gcc -Irtl rtl/mjrtl.c $(DEPEND_RTL_OBJS) $< -o $@
+	gcc $(CFLAGS) -Irtl rtl/mjrtl.c $(DEPEND_RTL_OBJS) $< -o $@
 
 out/bootstrap/test/call.out: out/bootstrap/test/call.exe
 	$< >$@.tmp
@@ -549,7 +551,7 @@ out/bootstrap/test/apply.asm: out/bootstrap/test/apply.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) out/bootstrap/test/apply.sasm-opt --out=out/bootstrap/test/apply.asm
 
 out/bootstrap/test/apply.o: out/bootstrap/test/apply.asm
-	nasm -felf32 out/bootstrap/test/apply.asm -o out/bootstrap/test/apply.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/apply.asm -o out/bootstrap/test/apply.o
 
 out/bootstrap/test/apply.exe: out/bootstrap/test/apply.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -573,7 +575,7 @@ out/bootstrap/test/getenv.asm: out/bootstrap/test/getenv.sasm-opt $(DEPEND_SASMC
 	$(SASMC) out/bootstrap/test/getenv.sasm-opt --out=out/bootstrap/test/getenv.asm
 
 out/bootstrap/test/getenv.o: out/bootstrap/test/getenv.asm
-	nasm -felf32 out/bootstrap/test/getenv.asm -o out/bootstrap/test/getenv.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/getenv.asm -o out/bootstrap/test/getenv.o
 
 out/bootstrap/test/getenv.exe: out/bootstrap/test/getenv.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -597,7 +599,7 @@ out/bootstrap/test/cseconds.asm: out/bootstrap/test/cseconds.sasm-opt $(DEPEND_S
 	$(SASMC) out/bootstrap/test/cseconds.sasm-opt --out=out/bootstrap/test/cseconds.asm
 
 out/bootstrap/test/cseconds.o: out/bootstrap/test/cseconds.asm
-	nasm -felf32 out/bootstrap/test/cseconds.asm -o out/bootstrap/test/cseconds.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/cseconds.asm -o out/bootstrap/test/cseconds.o
 
 out/bootstrap/test/cseconds.exe: out/bootstrap/test/cseconds.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -617,7 +619,7 @@ out/bootstrap/test/stat.asm: out/bootstrap/test/stat.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) out/bootstrap/test/stat.sasm-opt --out=out/bootstrap/test/stat.asm
 
 out/bootstrap/test/stat.o: out/bootstrap/test/stat.asm
-	nasm -felf32 out/bootstrap/test/stat.asm -o out/bootstrap/test/stat.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/stat.asm -o out/bootstrap/test/stat.o
 
 out/bootstrap/test/stat.exe: out/bootstrap/test/stat.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -641,7 +643,7 @@ out/bootstrap/test/delete.asm: out/bootstrap/test/delete.sasm-opt $(DEPEND_SASMC
 	$(SASMC) out/bootstrap/test/delete.sasm-opt --out=out/bootstrap/test/delete.asm
 
 out/bootstrap/test/delete.o: out/bootstrap/test/delete.asm
-	nasm -felf32 out/bootstrap/test/delete.asm -o out/bootstrap/test/delete.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/delete.asm -o out/bootstrap/test/delete.o
 
 out/bootstrap/test/delete.exe: out/bootstrap/test/delete.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -667,7 +669,7 @@ out/bootstrap/test/rename.asm: out/bootstrap/test/rename.sasm-opt $(DEPEND_SASMC
 	$(SASMC) out/bootstrap/test/rename.sasm-opt --out=out/bootstrap/test/rename.asm
 
 out/bootstrap/test/rename.o: out/bootstrap/test/rename.asm
-	nasm -felf32 out/bootstrap/test/rename.asm -o out/bootstrap/test/rename.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/rename.asm -o out/bootstrap/test/rename.o
 
 out/bootstrap/test/rename.exe: out/bootstrap/test/rename.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -695,7 +697,7 @@ out/bootstrap/test/argv.asm: out/bootstrap/test/argv.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) out/bootstrap/test/argv.sasm-opt --out=out/bootstrap/test/argv.asm
 
 out/bootstrap/test/argv.o: out/bootstrap/test/argv.asm
-	nasm -felf32 out/bootstrap/test/argv.asm -o out/bootstrap/test/argv.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/argv.asm -o out/bootstrap/test/argv.o
 
 out/bootstrap/test/argv.exe: out/bootstrap/test/argv.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -719,7 +721,7 @@ out/bootstrap/test/disptest.asm: out/bootstrap/test/disptest.sasm-opt $(DEPEND_S
 	$(SASMC) out/bootstrap/test/disptest.sasm-opt --out=out/bootstrap/test/disptest.asm
 
 out/bootstrap/test/disptest.o: out/bootstrap/test/disptest.asm
-	nasm -felf32 out/bootstrap/test/disptest.asm -o out/bootstrap/test/disptest.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/disptest.asm -o out/bootstrap/test/disptest.o
 
 out/bootstrap/test/disptest.exe: out/bootstrap/test/disptest.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -743,7 +745,7 @@ out/bootstrap/test/disptest2.asm: out/bootstrap/test/disptest2.sasm-opt $(DEPEND
 	$(SASMC) out/bootstrap/test/disptest2.sasm-opt --out=out/bootstrap/test/disptest2.asm
 
 out/bootstrap/test/disptest2.o: out/bootstrap/test/disptest2.asm
-	nasm -felf32 out/bootstrap/test/disptest2.asm -o out/bootstrap/test/disptest2.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/disptest2.asm -o out/bootstrap/test/disptest2.o
 
 out/bootstrap/test/disptest2.exe: out/bootstrap/test/disptest2.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -767,7 +769,7 @@ out/bootstrap/test/outputfile.asm: out/bootstrap/test/outputfile.sasm-opt $(DEPE
 	$(SASMC) out/bootstrap/test/outputfile.sasm-opt --out=out/bootstrap/test/outputfile.asm
 
 out/bootstrap/test/outputfile.o: out/bootstrap/test/outputfile.asm
-	nasm -felf32 out/bootstrap/test/outputfile.asm -o out/bootstrap/test/outputfile.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/outputfile.asm -o out/bootstrap/test/outputfile.o
 
 out/bootstrap/test/outputfile.exe: out/bootstrap/test/outputfile.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -792,7 +794,7 @@ out/bootstrap/test/inputfile.asm: out/bootstrap/test/inputfile.sasm-opt $(DEPEND
 	$(SASMC) out/bootstrap/test/inputfile.sasm-opt --out=out/bootstrap/test/inputfile.asm
 
 out/bootstrap/test/inputfile.o: out/bootstrap/test/inputfile.asm
-	nasm -felf32 out/bootstrap/test/inputfile.asm -o out/bootstrap/test/inputfile.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/inputfile.asm -o out/bootstrap/test/inputfile.o
 
 out/bootstrap/test/inputfile.exe: out/bootstrap/test/inputfile.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -819,7 +821,7 @@ out/bootstrap/test/read.asm: out/bootstrap/test/read.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) out/bootstrap/test/read.sasm-opt --out=out/bootstrap/test/read.asm
 
 out/bootstrap/test/read.o: out/bootstrap/test/read.asm
-	nasm -felf32 out/bootstrap/test/read.asm -o out/bootstrap/test/read.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/read.asm -o out/bootstrap/test/read.o
 
 out/bootstrap/test/read.exe: out/bootstrap/test/read.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -846,7 +848,7 @@ out/bootstrap/test/read2.asm: out/bootstrap/test/read2.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) out/bootstrap/test/read2.sasm-opt --out=out/bootstrap/test/read2.asm
 
 out/bootstrap/test/read2.o: out/bootstrap/test/read2.asm
-	nasm -felf32 out/bootstrap/test/read2.asm -o out/bootstrap/test/read2.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/read2.asm -o out/bootstrap/test/read2.o
 
 out/bootstrap/test/read2.exe: out/bootstrap/test/read2.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -873,7 +875,7 @@ out/bootstrap/test/read3.asm: out/bootstrap/test/read3.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) out/bootstrap/test/read3.sasm-opt --out=out/bootstrap/test/read3.asm
 
 out/bootstrap/test/read3.o: out/bootstrap/test/read3.asm
-	nasm -felf32 out/bootstrap/test/read3.asm -o out/bootstrap/test/read3.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/read3.asm -o out/bootstrap/test/read3.o
 
 out/bootstrap/test/read3.exe: out/bootstrap/test/read3.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -901,7 +903,7 @@ out/bootstrap/test/peekchar.asm: out/bootstrap/test/peekchar.sasm-opt $(DEPEND_S
 	$(SASMC) out/bootstrap/test/peekchar.sasm-opt --out=out/bootstrap/test/peekchar.asm
 
 out/bootstrap/test/peekchar.o: out/bootstrap/test/peekchar.asm
-	nasm -felf32 out/bootstrap/test/peekchar.asm -o out/bootstrap/test/peekchar.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/peekchar.asm -o out/bootstrap/test/peekchar.o
 
 out/bootstrap/test/peekchar.exe: out/bootstrap/test/peekchar.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -925,7 +927,7 @@ out/bootstrap/test/mkvec.asm: out/bootstrap/test/mkvec.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) out/bootstrap/test/mkvec.sasm-opt --out=out/bootstrap/test/mkvec.asm
 
 out/bootstrap/test/mkvec.o: out/bootstrap/test/mkvec.asm
-	nasm -felf32 out/bootstrap/test/mkvec.asm -o out/bootstrap/test/mkvec.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/mkvec.asm -o out/bootstrap/test/mkvec.o
 
 out/bootstrap/test/mkvec.exe: out/bootstrap/test/mkvec.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -952,7 +954,7 @@ out/bootstrap/test/eqv.asm: out/bootstrap/test/eqv.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) out/bootstrap/test/eqv.sasm-opt --out=out/bootstrap/test/eqv.asm
 
 out/bootstrap/test/eqv.o: out/bootstrap/test/eqv.asm
-	nasm -felf32 out/bootstrap/test/eqv.asm -o out/bootstrap/test/eqv.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/eqv.asm -o out/bootstrap/test/eqv.o
 
 out/bootstrap/test/eqv.exe: out/bootstrap/test/eqv.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -979,7 +981,7 @@ out/bootstrap/test/eq.asm: out/bootstrap/test/eq.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) out/bootstrap/test/eq.sasm-opt --out=out/bootstrap/test/eq.asm
 
 out/bootstrap/test/eq.o: out/bootstrap/test/eq.asm
-	nasm -felf32 out/bootstrap/test/eq.asm -o out/bootstrap/test/eq.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/eq.asm -o out/bootstrap/test/eq.o
 
 out/bootstrap/test/eq.exe: out/bootstrap/test/eq.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -1006,7 +1008,7 @@ out/bootstrap/test/vararg.asm: out/bootstrap/test/vararg.sasm-opt $(DEPEND_SASMC
 	$(SASMC) out/bootstrap/test/vararg.sasm-opt --out=out/bootstrap/test/vararg.asm
 
 out/bootstrap/test/vararg.o: out/bootstrap/test/vararg.asm
-	nasm -felf32 out/bootstrap/test/vararg.asm -o out/bootstrap/test/vararg.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/vararg.asm -o out/bootstrap/test/vararg.o
 
 out/bootstrap/test/vararg.exe: out/bootstrap/test/vararg.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -1033,7 +1035,7 @@ out/bootstrap/test/letrec.asm: out/bootstrap/test/letrec.sasm-opt $(DEPEND_SASMC
 	$(SASMC) out/bootstrap/test/letrec.sasm-opt --out=out/bootstrap/test/letrec.asm
 
 out/bootstrap/test/letrec.o: out/bootstrap/test/letrec.asm
-	nasm -felf32 out/bootstrap/test/letrec.asm -o out/bootstrap/test/letrec.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/letrec.asm -o out/bootstrap/test/letrec.o
 
 out/bootstrap/test/letrec.exe: out/bootstrap/test/letrec.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -1056,7 +1058,7 @@ out/bootstrap/test/read4.asm: out/bootstrap/test/read4.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) out/bootstrap/test/read4.sasm-opt --out=out/bootstrap/test/read4.asm
 
 out/bootstrap/test/read4.o: out/bootstrap/test/read4.asm
-	nasm -felf32 out/bootstrap/test/read4.asm -o out/bootstrap/test/read4.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/read4.asm -o out/bootstrap/test/read4.o
 
 out/bootstrap/test/read4.exe: out/bootstrap/test/read4.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -1083,7 +1085,7 @@ out/bootstrap/test/read5.asm: out/bootstrap/test/read5.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) out/bootstrap/test/read5.sasm-opt --out=out/bootstrap/test/read5.asm
 
 out/bootstrap/test/read5.o: out/bootstrap/test/read5.asm
-	nasm -felf32 out/bootstrap/test/read5.asm -o out/bootstrap/test/read5.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/read5.asm -o out/bootstrap/test/read5.o
 
 out/bootstrap/test/read5.exe: out/bootstrap/test/read5.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -1110,7 +1112,7 @@ out/bootstrap/test/sym1.asm: out/bootstrap/test/sym1.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) out/bootstrap/test/sym1.sasm-opt --out=out/bootstrap/test/sym1.asm
 
 out/bootstrap/test/sym1.o: out/bootstrap/test/sym1.asm
-	nasm -felf32 out/bootstrap/test/sym1.asm -o out/bootstrap/test/sym1.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/sym1.asm -o out/bootstrap/test/sym1.o
 
 out/bootstrap/test/sym1.exe: out/bootstrap/test/sym1.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -1137,7 +1139,7 @@ out/bootstrap/test/badapply.asm: out/bootstrap/test/badapply.sasm-opt $(DEPEND_S
 	$(SASMC) out/bootstrap/test/badapply.sasm-opt --out=out/bootstrap/test/badapply.asm
 
 out/bootstrap/test/badapply.o: out/bootstrap/test/badapply.asm
-	nasm -felf32 out/bootstrap/test/badapply.asm -o out/bootstrap/test/badapply.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/badapply.asm -o out/bootstrap/test/badapply.o
 
 out/bootstrap/test/badapply.exe: out/bootstrap/test/badapply.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -1216,13 +1218,13 @@ out/bootstrap/test/tests-printer-helper.asm: out/bootstrap/test/tests-printer-he
 	$(SASMC) out/bootstrap/test/tests-printer-helper.sasm-opt --out=out/bootstrap/test/tests-printer-helper.asm
 
 out/bootstrap/test/gc1.o: out/bootstrap/test/gc1.asm
-	nasm -felf32 out/bootstrap/test/gc1.asm -o out/bootstrap/test/gc1.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/gc1.asm -o out/bootstrap/test/gc1.o
 
 out/bootstrap/test/tests-printer.o: out/bootstrap/test/tests-printer.asm
-	nasm -felf32 out/bootstrap/test/tests-printer.asm -o out/bootstrap/test/tests-printer.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/tests-printer.asm -o out/bootstrap/test/tests-printer.o
 
 out/bootstrap/test/tests-printer-helper.o: out/bootstrap/test/tests-printer-helper.asm
-	nasm -felf32 out/bootstrap/test/tests-printer-helper.asm -o out/bootstrap/test/tests-printer-helper.o
+	nasm $(NASM_FLAGS) out/bootstrap/test/tests-printer-helper.asm -o out/bootstrap/test/tests-printer-helper.o
 
 out/bootstrap/test/gc1.exe: out/bootstrap/test/gc1.o out/bootstrap/test/tests-printer.o out/bootstrap/test/tests-printer-helper.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL_OMIT_MAIN) $< out/bootstrap/test/tests-printer.o out/bootstrap/test/tests-printer-helper.o -o $@
@@ -1249,7 +1251,7 @@ out/bootstrap/test/%.asm: out/bootstrap/test/%.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) $< --out=$@
 
 out/bootstrap/test/%.o: out/bootstrap/test/%.asm
-	nasm -felf32 $< -o $@
+	nasm $(NASM_FLAGS) $< -o $@
 
 out/bootstrap/test/%.exe: out/bootstrap/test/%.o $(DEPEND_RTL) $(DEPEND_SCHEME_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
@@ -1292,7 +1294,7 @@ out/bootstrap/sasm-sasm-nasmx86.sasm-opt: out/bootstrap/sasm-sasm-nasmx86.sasm $
 
 # rtl rules
 out/bootstrap/%.o: out/bootstrap/%.asm
-	nasm -felf32 $< -o $@
+	nasm $(NASM_FLAGS) $< -o $@
 
 out/bootstrap/debug.asm: rtl/debug.asm
 	cp rtl/debug.asm out/bootstrap/debug.asm
