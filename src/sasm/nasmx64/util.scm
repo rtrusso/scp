@@ -1,4 +1,4 @@
-(define nasm-x86-registers 
+(define nasm-x64-registers 
   '((accum . "rax") (operand . "rbx") (this . "rcx") (index . "rdx")
     (link . "rdi") (pointer . "rsi")
     (r8 . "r8") (r9 . "r9") (r10 . "r10") (r11 . "r11")

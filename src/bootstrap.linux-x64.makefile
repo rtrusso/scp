@@ -8,7 +8,7 @@ include java-compiler.dep
 # TINYSCHEMEINIT=../bootstrap/tinyscheme-1.41/init.scm
 # SCHEME=../bootstrap/tinyscheme-1.41/scheme.exe -1
 # SASMOPT=$(SCHEME) out/sasm-opt-x64-flat-ts.scm
-# SASMC=$(SCHEME) out/sasm-flat-x64-ts.scm
+# SASMC=$(SCHEME) out/sasm-x64-flat-ts.scm
 # SCHEMEC=$(SCHEME) $(SCHEMEC_FLAT_TS)
 # OUTDIR=out/bootstrap
 
@@ -91,7 +91,7 @@ DEPEND_SASMOPT=\
   out/sasm-opt-x64-flat-ts.scm
 
 DEPEND_SASMC=\
-  out/sasm-flat-x64-ts.scm
+  out/sasm-x64-flat-ts.scm
 
 DEPEND_GLUEC=\
   $(GLUEC_FLAT_TS)
@@ -386,13 +386,13 @@ DEPEND_ALL=\
   $(DEPEND_JAVA_GC_TEST_FILES) \
   $(DEPEND_SCHEMEC_TEST_MARKER) \
   \
-  out/bootstrap-sasm-ts.sh \
-  out/sasm-bootstrap.out \
-  out/bootstrap-x64/sasm.exe \
+  out/bootstrap-sasm-x64-ts.sh \
+  out/sasm-x64-bootstrap.out \
+  out/bootstrap-x64/sasm-x64.exe \
   \
   out/bootstrap-sasm-opt-x64-ts.sh \
   out/sasm-opt-bootstrap.out \
-  out/bootstrap-x64/sasm-opt.exe \
+  out/bootstrap-x64/sasm-x64-opt.exe \
   \
   out/bootstrap-scheme-compiler-ts.sh \
   out/scheme-compiler-bootstrap.out \
@@ -458,17 +458,17 @@ out/sasm-opt-x64-ts-expanded.out: out/bootstrap-expand-sasm-opt-x64-ts.sh env.sh
 out/sasm-opt-x64-flat-ts.scm : out/sasm-opt-x64-ts-expanded.out
 	$(SCHEME) needc-ts.scm --root out/bootstrap-x64 --flat-names --output out/sasm-opt-x64-flat-ts.scm sasm-opt-x64-ts
 
-# Expand, flatten sasm-ts tool
-out/bootstrap-expand-sasm-ts.sh : sasm.scm $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm)
-	$(SCHEME) needc-ts.scm --script-mode --expand-only --output out/bootstrap-expand-sasm-ts.sh sasm-ts
+# Expand, flatten sasm-x64-ts tool
+out/bootstrap-expand-sasm-x64-ts.sh : sasm.scm $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm)
+	$(SCHEME) needc-ts.scm --script-mode --expand-only --output out/bootstrap-expand-sasm-x64-ts.sh sasm-x64-ts
 
-out/sasm-ts-expanded.out: out/bootstrap-expand-sasm-ts.sh env.sh $(DEPEND_SCHEMEC) $(BOOTSTRAP_DIR)
-	chmod +x ./out/bootstrap-expand-sasm-ts.sh
-	./out/bootstrap-expand-sasm-ts.sh
-	touch out/sasm-ts-expanded.out
+out/sasm-x64-ts-expanded.out: out/bootstrap-expand-sasm-x64-ts.sh env.sh $(DEPEND_SCHEMEC) $(BOOTSTRAP_DIR)
+	chmod +x ./out/bootstrap-expand-sasm-x64-ts.sh
+	./out/bootstrap-expand-sasm-x64-ts.sh
+	touch out/sasm-x64-ts-expanded.out
 
-out/sasm-flat-ts.scm: out/sasm-ts-expanded.out
-	$(SCHEME) needc-ts.scm --root out/bootstrap-x64 --flat-names --output out/sasm-flat-ts.scm sasm-ts
+out/sasm-x64-flat-ts.scm: out/sasm-x64-ts-expanded.out
+	$(SCHEME) needc-ts.scm --root out/bootstrap-x64 --flat-names --output out/sasm-x64-flat-ts.scm sasm-x64-ts
 
 # test minijava compiler
 out/bootstrap-x64/test/java/%.sasm : tests/%.java $(BOOTSTRAP_TEST_JAVA_DIR) $(DEPEND_JAVAC)
