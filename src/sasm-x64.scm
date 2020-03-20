@@ -1,0 +1,5 @@
+(need sasm/sasm)
+(need sasm/sasm-nasmx64)
+(sasm-set-target-x64!)
+(sasm-set-x64-hw-params!)
+(sasm-assembler-main *argv*)

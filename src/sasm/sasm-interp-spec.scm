@@ -22,6 +22,15 @@
                 nasm-x86-sys-registers))
      (set! *sasm-caller-destroy-registers*
            '(ebx ecx edx edi esi)))
+    ((x64)
+     (set! *sasm-register-mapping*
+           (map (lambda (x) (cons (car x) (string->symbol (cdr x))))
+                nasm-x64-registers))
+     (set! *sasm-sys-register-mapping*
+           (map (lambda (x) (cons (car x) (string->symbol (cdr x))))
+                nasm-x64-sys-registers))
+     (set! *sasm-caller-destroy-registers*
+           '(rbx rcx rdx rdi rsi r8 r9 r10 r11 r12 r13 r14 r15)))
     ((mips)
      (set! *sasm-register-mapping*
            (map (lambda (x) (cons (car x) (string->symbol (cdr x))))
