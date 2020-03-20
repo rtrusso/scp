@@ -1,5 +1,5 @@
-include sasm.dep
-include sasm-opt.dep
+include sasm-x64.dep
+include sasm-opt-x64.dep
 include scheme-compiler.dep
 include java-compiler.dep
 
@@ -447,7 +447,7 @@ out/java-compiler-flat-ts.scm : out/java-compiler-expanded.out
 	$(SCHEME) needc-ts.scm --root out/bootstrap-x64 --flat-names --output out/java-compiler-flat-ts.scm java-compiler-ts
 
 # Expand, flatten sasm-opt-x64-ts tool
-out/bootstrap-expand-sasm-opt-x64-ts.sh : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm_opt)
+out/bootstrap-expand-sasm-opt-x64-ts.sh : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm_opt_x64)
 	$(SCHEME) needc-ts.scm --script-mode --expand-only --output out/bootstrap-expand-sasm-opt-x64-ts.sh sasm-opt-x64-ts
 
 out/sasm-opt-x64-ts-expanded.out: out/bootstrap-expand-sasm-opt-x64-ts.sh env.sh  $(DEPEND_SCHEMEC) $(BOOTSTRAP_DIR)
@@ -459,7 +459,7 @@ out/sasm-opt-x64-flat-ts.scm : out/sasm-opt-x64-ts-expanded.out
 	$(SCHEME) needc-ts.scm --root out/bootstrap-x64 --flat-names --output out/sasm-opt-x64-flat-ts.scm sasm-opt-x64-ts
 
 # Expand, flatten sasm-x64-ts tool
-out/bootstrap-expand-sasm-x64-ts.sh : sasm.scm $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm)
+out/bootstrap-expand-sasm-x64-ts.sh : sasm.scm $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm_x64)
 	$(SCHEME) needc-ts.scm --script-mode --expand-only --output out/bootstrap-expand-sasm-x64-ts.sh sasm-x64-ts
 
 out/sasm-x64-ts-expanded.out: out/bootstrap-expand-sasm-x64-ts.sh env.sh $(DEPEND_SCHEMEC) $(BOOTSTRAP_DIR)
@@ -529,7 +529,7 @@ out/bootstrap-x64/test/call.asm: out/bootstrap-x64/test/call.sasm-opt-x64 $(DEPE
 out/bootstrap-x64/test/call.o: out/bootstrap-x64/test/call.asm
 	nasm $(NASM_FLAGS) out/bootstrap-x64/test/call.asm -o out/bootstrap-x64/test/call.o
 
-out/bootstrap-x64/test/call.exe: out/bootstrap-x64/test/call.o rtl/mjrtl.c
+out/bootstrap-x64/test/call.exe: out/bootstrap-x64/test/call.o rtl/mjrtl.c $(DEPEND_RTL_OBJS)
 	gcc $(CFLAGS) -Irtl rtl/mjrtl.c $(DEPEND_RTL_OBJS) $< -o $@
 
 out/bootstrap-x64/test/call.out: out/bootstrap-x64/test/call.exe
@@ -1303,7 +1303,7 @@ out/bootstrap-x64/%.asm: out/bootstrap-x64/%.sasm-opt-x64 $(DEPEND_SASMC)
 	$(SASMC) $< --out=$@
 
 # bootstrap sasm-x64 tool
-out/bootstrap-sasm-x64-ts.sh : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm)
+out/bootstrap-sasm-x64-ts.sh : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm_x64)
 	$(SCHEME) needc-ts.scm --script-mode --output out/bootstrap-sasm-x64-ts.sh sasm-x64
 
 out/sasm-x64-bootstrap.out: out/bootstrap-sasm-x64-ts.sh $(DEPEND_SCHEMEC) $(BOOTSTRAP_DIR)
@@ -1316,7 +1316,7 @@ out/bootstrap-x64/sasm-x64.exe: $(DEPEND_RTL) $(DEPEND_SCHEME_RTL_OMIT_MAIN) out
 
 
 # bootstrap sasm-opt-x64 tool
-out/bootstrap-sasm-opt-x64-ts.sh : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm_opt)
+out/bootstrap-sasm-opt-x64-ts.sh : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm_opt_x64)
 	$(SCHEME) needc-ts.scm --script-mode --output out/bootstrap-sasm-opt-x64-ts.sh sasm-opt-x64
 
 out/sasm-opt-x64-bootstrap.out: out/bootstrap-sasm-opt-x64-ts.sh $(DEPEND_SCHEMEC) $(BOOTSTRAP_DIR)

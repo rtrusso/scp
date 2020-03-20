@@ -10,7 +10,7 @@
                                         (result (op load-array)
                                                 (,register? ptr)
                                                 (const (,integer? offset)))))
-                (rewrite-rule ("imul dword [~~~]"
+                (rewrite-rule ("imul qword [~~~]"
                                (ptr register)
                                (offset nasm-x64-offset+/-)
                                (offset nasm-x64-offset))))
@@ -24,13 +24,13 @@
                                         (result (op load-array) 
                                                 (,register? ptr)
                                                 (const (,integer? offset)))))
-                (rewrite-rule ((assign (reg eax) (replace op-a)) (op-a sym-register))
-                              ("imul dword [~~~]" 
+                (rewrite-rule ((assign (reg rax) (replace op-a)) (op-a sym-register))
+                              ("imul qword [~~~]" 
                                (ptr register)
                                (offset nasm-x64-offset+/-)
                                (offset nasm-x64-offset))
-                              ((assign (replace dest) (reg eax)) (dest sym-register)))
-                (side-effects (reg eax) (reg edx))
+                              ((assign (replace dest) (reg rax)) (dest sym-register)))
+                (side-effects (reg rax) (reg rdx))
                 (insel-rewrite-rule (assign (reg accum) (replace op-a))
                                     (assign (reg accum) (op hyg-mul) (reg accum)
                                             (result (op load-array)
@@ -39,10 +39,10 @@
                                     (assign (replace dest) (reg accum)) ))
 
    (instruction (input-pattern `(assign (,register? dest) (op mul) (,const-or-reg? op-a) (,const-or-reg? op-b)))
-                (rewrite-rule ((assign (reg eax) (replace op-a)) (op-a sym-register))
+                (rewrite-rule ((assign (reg rax) (replace op-a)) (op-a sym-register))
                               ("imul ~" (op-b register))
-                              ((assign (replace dest) (reg eax)) (dest sym-register)))
-                (side-effects (reg eax) (reg edx))
+                              ((assign (replace dest) (reg rax)) (dest sym-register)))
+                (side-effects (reg rax) (reg rdx))
                 (insel-rewrite-rule (assign (replace-temp x) (replace op-b))
                                     (assign (reg accum) (replace op-a))
                                     (assign (reg accum) (op hyg-mul) (reg accum) (replace-temp x))

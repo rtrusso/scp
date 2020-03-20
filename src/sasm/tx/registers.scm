@@ -25,10 +25,10 @@
                                       (map cdr *machine-register-list*)
                                       (map car *machine-register-list*)))))
            (if (not entry)
-               (error "invalid register name -- reverse-lookup-register"))
+               (error "invalid register name -- reverse-lookup-register" reg))
            (cdr entry)))
         (else
-         (error "invalid register spec -- reverse-lookup-register"))))
+         (error "invalid register spec -- reverse-lookup-register" reg))))
 
 (define (reverse-map-side-effects side-effects)
   (map (lambda (x) 
