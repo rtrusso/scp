@@ -25,8 +25,8 @@ int _tmain( int argc, TCHAR *argv[] )
   void *pHeap;
   void *pHeapFixed;
   void *pHeapFixed2;
-  char *iter;
-  int count;
+  /* char *iter; */
+  /* int count; */
 
   SYM(gc_root_stack_limit) = &pHeap;
 
@@ -38,14 +38,14 @@ int _tmain( int argc, TCHAR *argv[] )
     ExitProcess( 1 );
   }
 
-  count = VARIABLE_HEAP_SIZE;
-  iter = (char*)pHeap;
-  printf("walking heap %p\n", iter);
-  while (count--)
-    {
-      *(iter++) = 0;
-    }
-  printf("initialized heap %p\n", iter);
+  /* count = VARIABLE_HEAP_SIZE; */
+  /* iter = (char*)pHeap; */
+  /* printf("walking heap %p\n", iter); */
+  /* while (count--) */
+  /*   { */
+  /*     *(iter++) = 0; */
+  /*   } */
+  /* printf("initialized heap %p\n", iter); */
 
   memset( pHeap, 0, VARIABLE_HEAP_SIZE );
 
