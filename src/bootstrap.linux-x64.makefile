@@ -49,7 +49,7 @@ JAVAC=$(SCHEME) $(JAVAC_FLAT_TS)
 
 GLUEC_FLAT_TS=out/scheme-gluec-flat-ts.scm
 GLUEC=$(SCHEME) $(GLUEC_FLAT_TS)
-CFLAGS=-g -m64
+CFLAGS=-g -m64 -no-pie -fno-pie
 SCHEME_CFLAGS=-DSCHEME_RTL=1 $(CFLAGS)
 NASM_FLAGS=-felf64
 

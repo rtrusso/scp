@@ -22,7 +22,7 @@
                 (rewrite-rule "extern ~" (label label)))
 
    (instruction (input-pattern `(perform (op reserve-locals) (const (,intconst? n))))
-                (rewrite-rule "sub esp, ~"
+                (rewrite-rule "sub rsp, ~"
                               (n (lambda (x) (* 8 x)))))
 
    (instruction (input-pattern `(perform (op function-preamble)))

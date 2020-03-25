@@ -49,7 +49,9 @@ JAVAC=$(SCHEME) $(JAVAC_FLAT_TS)
 
 GLUEC_FLAT_TS=out/scheme-gluec-flat-ts.scm
 GLUEC=$(SCHEME) $(GLUEC_FLAT_TS)
-SCHEME_CFLAGS=-DSCHEME_RTL=1
+CFLAGS=
+SCHEME_CFLAGS=-DSCHEME_RTL=1 $(CFLAGS)
+NASM_FLAGS=
 
 SCHEME_RTL=\
   out/bootstrap/r5rs-library.sasm \

@@ -25,4 +25,7 @@
 # endif
 #endif
 
+typedef int* sasm_word_t;
+#define SASM_WORD_SIZE sizeof(sasm_word_t)
+
 #endif /* SASM_H_ */
