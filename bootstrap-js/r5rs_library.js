@@ -134,9 +134,9 @@
 (define (cddddr pair) (cdr (cdr (cdr (cdr pair)))))
 
 (define (nullP obj)
-  (eqP '() obj))
+  (eqP nil obj))
 
-(define (list? pair)
+(define (listP pair)
   (define (iter slow fast)
     (cond ((or (nullP slow) (nullP fast)) true)
           ((or (not (pairP slow)) (not (pairP fast))) false)
@@ -172,17 +172,17 @@
         r
         (iter (cons (car l) r)
               (cdr l))))
-  (iter '() list))
+  (iter nil list))
 
-(define (list-tail list k)
+(define (list_tail list k)
   (if (zeroP k)
       list
-      (list-tail (cdr list) (subtract_operator k 1))))
+      (list_tail (cdr list) (subtract_operator k 1))))
 
-(define (list-ref list k)
+(define (list_ref list k)
   (if (zeroP k)
       (car list)
-      (list-ref (cdr list) (subtract_operator k 1))))
+      (list_ref (cdr list) (subtract_operator k 1))))
 
 (define (memq obj list)
   (cond ((nullP list) false)
@@ -214,20 +214,20 @@
         ((equalP obj (caar alist)) (car alist))
         (else (assoc obj (cdr alist)))))
 
-(define (char-ci=? char1 char2)
-  (char_eqP (char-downcase char1) (char-downcase char2)))
+(define (char_ci_eqP char1 char2)
+  (char_eqP (char_downcase char1) (char_downcase char2)))
 
-(define (char-ci<? char1 char2)
-  (char<? (char-downcase char1) (char-downcase char2)))
-
+(define (char_ci_ltP char1 char2)
+  (char_ltP (char_downcase char1) (char_downcase char2)))
+// left off here
 (define (char-ci>? char1 char2)
-  (char>? (char-downcase char1) (char-downcase char2)))
+  (char>? (char_downcase char1) (char_downcase char2)))
 
 (define (char-ci<=? char1 char2)
-  (char<=? (char-downcase char1) (char-downcase char2)))
+  (char<=? (char_downcase char1) (char_downcase char2)))
 
 (define (char-ci>=? char1 char2)
-  (char>=? (char-downcase char1) (char-downcase char2)))
+  (char>=? (char_downcase char1) (char_downcase char2)))
 
 (define (char-alphabetic? char)
   (or (char-upper-case? char) (char-lower-case? char)))
@@ -268,7 +268,7 @@
                          (#\y . #\y) (#\z . #\Z)))))
     (if a (cdr a) char)))
 
-(define (char-downcase char)
+(define (char_downcase char)
   (let ((a (assoc char '((#\A . #\a) (#\B . #\b) (#\C . #\c) (#\D . #\d)
                          (#\E . #\e) (#\F . #\f) (#\G . #\g) (#\H . #\h)
                          (#\I . #\i) (#\J . #\j) (#\K . #\k) (#\L . #\l)
@@ -292,7 +292,7 @@
 (define (string-ci=? s1 s2)
   (define (iter i)
     (cond ((>= i (string_length s1)) true)
-          ((char-ci=? (string_ref s1 i) (string_ref s2 i)) (iter (+ i 1)))
+          ((char_ci_eqP (string_ref s1 i) (string_ref s2 i)) (iter (+ i 1)))
           (else false)))
   (if (= (string_length s1) (string_length s2))
       (iter 0)
@@ -304,7 +304,7 @@
                (>= i (string_length s2)))
            (< (string_length s1) (string_length s2)))
           ((char_eqP (string_ref s1 i) (string_ref s2 i)) (iter (+ i 1)))
-          (else (char<? (string_ref s1 i) (string_ref s2 i)))))
+          (else (char_ltP (string_ref s1 i) (string_ref s2 i)))))
   (iter 0))
 
 (define (string>? s1 s2)
@@ -339,8 +339,8 @@
     (cond ((or (>= i (string_length s1))
                (>= i (string_length s2)))
            (< (string_length s1) (string_length s2)))
-          ((char-ci=? (string_ref s1 i) (string_ref s2 i)) (iter (+ i 1)))
-          (else (char-ci<? (string_ref s1 i) (string_ref s2 i)))))
+          ((char_ci_eqP (string_ref s1 i) (string_ref s2 i)) (iter (+ i 1)))
+          (else (char_ci_ltP (string_ref s1 i) (string_ref s2 i)))))
   (iter 0))
 
 (define (string-ci>? s1 s2)
@@ -348,7 +348,7 @@
     (cond ((or (>= i (string_length s1))
                (>= i (string_length s2)))
            (> (string_length s1) (string_length s2)))
-          ((char-ci=? (string_ref s1 i) (string_ref s2 i)) (iter (+ i 1)))
+          ((char_ci_eqP (string_ref s1 i) (string_ref s2 i)) (iter (+ i 1)))
           (else (char-ci>? (string_ref s1 i) (string_ref s2 i)))))
   (iter 0))
 
@@ -357,7 +357,7 @@
     (cond ((or (>= i (string_length s1))
                (>= i (string_length s2)))
            (<= (string_length s1) (string_length s2)))
-          ((char-ci=? (string_ref s1 i) (string_ref s2 i)) (iter (+ i 1)))
+          ((char_ci_eqP (string_ref s1 i) (string_ref s2 i)) (iter (+ i 1)))
           (else (char-ci<=? (string_ref s1 i) (string_ref s2 i)))))
   (iter 0))
 
@@ -366,7 +366,7 @@
     (cond ((or (>= i (string_length s1))
                (>= i (string_length s2)))
            (>= (string_length s1) (string_length s2)))
-          ((char-ci=? (string_ref s1 i) (string_ref s2 i)) (iter (+ i 1)))
+          ((char_ci_eqP (string_ref s1 i) (string_ref s2 i)) (iter (+ i 1)))
           (else (char-ci>=? (string_ref s1 i) (string_ref s2 i)))))
   (iter 0))
 
@@ -375,7 +375,7 @@
     (if (< i end)
         (iter (cons (string_ref string i) r) (+ i 1))
         (list->string (reverse r))))
-  (iter '() start))
+  (iter nil start))
 
 (define (string-append s1 . s2)
   (define (append2 s1 s2)
@@ -391,7 +391,7 @@
     (if (>= i 0)
         (iter (cons (string_ref string i) r) (subtract_operator i 1))
         r))
-  (iter '() (subtract_operator (string_length string) 1)))
+  (iter nil (subtract_operator (string_length string) 1)))
 
 (define (list->string list)
   (let ((s (make-string (length list))))
@@ -420,7 +420,7 @@
     (if (>= i 0)
         (iter (cons (vector_ref vec i) r) (subtract_operator i 1))
         r))
-  (iter '() (subtract_operator (vector_length vec) 1)))
+  (iter nil (subtract_operator (vector_length vec) 1)))
 
 (define (list->vector list)
   (let ((vec (make-vector (length list))))
@@ -446,25 +446,25 @@
       (if (nullP list)
           (reverse r)
           (iter (cons (caar list) r) (cdr list))))
-    (iter '() list))
+    (iter nil list))
   (define (cdrs list)
     (define (iter r list)
       (if (nullP list)
           (reverse r)
           (iter (cons (cdar list) r) (cdr list))))
-    (iter '() list))
+    (iter nil list))
   (define (iter res lists)
     (if (any-nullP lists)
         (reverse res)
         (iter (cons (apply proc (cars lists)) res)
               (cdrs lists))))
   (if (nullP lists)
-      (let loop ((r '()) (l list))
+      (let loop ((r nil) (l list))
         (if (nullP l)
             (reverse r)
             (loop (cons (proc (car l)) r)
                   (cdr l))))
-      (iter '() (cons list lists))))
+      (iter nil (cons list lists))))
 
 (define (for-each proc list . lists)
   (define (any-nullP list)
@@ -499,7 +499,7 @@
 
 ;#DEFINE READER_EXTENSIONS
 ;#IFDEF READER_EXTENSIONS
-(define *reader-extensions* '())
+(define *reader-extensions* nil)
 
 (define (install-reader-extension start reader)
   (set! *reader-extensions* (cons (cons start reader)
@@ -522,10 +522,10 @@
                 (and (char? char) (char_eqP (peek-char port) char))
                 (and (stringP char) (member (peek-char port)
                                       (string->list char)))
-                (and (list? char) (member (peek-char port) char)))
+                (and (listP char) (member (peek-char port) char)))
             (list->string (reverse res))
             (iter (cons (read-char port) res))))
-      (iter '()))
+      (iter nil))
     (define (eat-comment)
       (read-until #\newline))
     (define (eat-whitespace)
@@ -640,14 +640,14 @@
             ((char-whitespace? char) (read port))
             ((and (char_eqP #\# char) (char_eqP #\\ next))
              (read-char-lit))
-            ((and (char_eqP #\# char) (char_eqP #\t (char-downcase next)))
+            ((and (char_eqP #\# char) (char_eqP #\t (char_downcase next)))
              (begin (read-char port)
                     true))
-            ((and (char_eqP #\# char) (char_eqP #\f (char-downcase next)))
+            ((and (char_eqP #\# char) (char_eqP #\f (char_downcase next)))
              (begin (read-char port)
                     false))
             ((and (char_eqP #\# char) (char_eqP #\( next))
-             (read-char port) (list->vector (read-list '())))
+             (read-char port) (list->vector (read-list nil)))
 ;#IFDEF READER_EXTENSIONS
             ((and (char_eqP #\# char) (assoc next *reader-extensions*))
              (let ((reader (cdr (assoc next *reader-extensions*))))
@@ -660,10 +660,10 @@
                                           (list 'unquote-splicing
                                                 (read port)))
                                    (list 'unquote (read port))))
-            ((char_eqP #\" char) (read-string '()))
+            ((char_eqP #\" char) (read-string nil))
             ((char_eqP #\( char)
 
-             (read-list '()))
+             (read-list nil))
             (else
              (let ((the-string (string-append
                                 (string char)
@@ -755,7 +755,7 @@
               ((booleanP obj) (disp (if obj "true" "false")))
               ((char? obj) (write-char obj port))
               ((vectorP obj) (disp-vector obj 0))
-              ((and (list? obj) (= 2 (length obj)) (eqvP 'quote (car obj)))
+              ((and (listP obj) (= 2 (length obj)) (eqvP 'quote (car obj)))
                (begin (disp "'") (display (cadr obj) port)))
               ((pairP obj) (disp-list "(" obj))
               ((nullP obj) (disp "()"))
@@ -838,7 +838,7 @@
     (if (and (= x -2147483648)
              (= radix 10))
         "-2147483648"
-        (let ((s (iter (abs x) '() radix)))
+        (let ((s (iter (abs x) nil radix)))
           (if (negativeP x)
               (string-append "-" s)
               s))))
