@@ -9,7 +9,7 @@ Use the following steps to bootstrap and validate the compiler.
 
 ## Linux
 
-- apt-get install gcc make nasm diffutils
+- apt-get install gcc gcc-multilib make nasm diffutils
 - run ./src/go.sh
 
 Since this will take a long time, consider running go.sh under nohup
