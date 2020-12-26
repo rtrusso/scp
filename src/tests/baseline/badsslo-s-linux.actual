@@ -1,0 +1,3 @@
+scheme bounds check error; index: -1 bound: 3 type: 2Segmentation fault
+
+exit=139

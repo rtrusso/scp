@@ -1164,9 +1164,17 @@ out/bootstrap/test/badvshi.out: out/bootstrap/test/badvshi.exe tests/badvshi.sh
 	./tests/badvshi.sh>$@.tmp
 	mv $@.tmp $@
 
+out/bootstrap/test/badvshi.diff: out/bootstrap/test/badvshi.out tests/baseline/badvshi-s-linux.actual
+	diff --strip-trailing-cr out/bootstrap/test/badvshi.out tests/baseline/badvshi-s-linux.actual
+	touch out/bootstrap/test/badvshi.diff
+
 out/bootstrap/test/badvslo.out: out/bootstrap/test/badvslo.exe tests/badvslo.sh
 	./tests/badvslo.sh>$@.tmp
 	mv $@.tmp $@
+
+out/bootstrap/test/badvslo.diff: out/bootstrap/test/badvslo.out tests/baseline/badvslo-s-linux.actual
+	diff --strip-trailing-cr out/bootstrap/test/badvslo.out tests/baseline/badvslo-s-linux.actual
+	touch out/bootstrap/test/badvslo.diff
 
 out/bootstrap/test/badsrhi.out: out/bootstrap/test/badsrhi.exe tests/badsrhi.sh
 	./tests/badsrhi.sh>$@.tmp
@@ -1180,10 +1188,17 @@ out/bootstrap/test/badsshi.out: out/bootstrap/test/badsshi.exe tests/badsshi.sh
 	./tests/badsshi.sh>$@.tmp
 	mv $@.tmp $@
 
+out/bootstrap/test/badsshi.diff: out/bootstrap/test/badsshi.out tests/baseline/badsshi-s-linux.actual
+	diff --strip-trailing-cr out/bootstrap/test/badsshi.out tests/baseline/badsshi-s-linux.actual
+	touch out/bootstrap/test/badsshi.diff
+
 out/bootstrap/test/badsslo.out: out/bootstrap/test/badsslo.exe tests/badsslo.sh
 	./tests/badsslo.sh>$@.tmp
 	mv $@.tmp $@
 
+out/bootstrap/test/badsslo.diff: out/bootstrap/test/badsslo.out tests/baseline/badsslo-s-linux.actual
+	diff --strip-trailing-cr out/bootstrap/test/badsslo.out tests/baseline/badsslo-s-linux.actual
+	touch out/bootstrap/test/badsslo.diff
 
 # Test scheme-compiler: gc1
 out/bootstrap/test/tests-printer.sasm: tests/printer.scm $(DEPEND_SCHEMEC) $(BOOTSTRAP_TEST_DIR)
