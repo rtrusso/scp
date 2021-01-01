@@ -170,6 +170,8 @@ long charvalue(pointer p);
 int is_vector(pointer p);
 
 int is_port(pointer p);
+int is_inport(pointer p);
+int is_outport(pointer p);
 
 int is_pair(pointer p);
 pointer pair_car(pointer p);
@@ -186,9 +188,7 @@ int is_proc(pointer p);
 int is_foreign(pointer p);
 char *syntaxname(pointer p);
 int is_closure(pointer p);
-#ifdef USE_MACRO
 int is_macro(pointer p);
-#endif
 pointer closure_code(pointer p);
 pointer closure_env(pointer p);
 

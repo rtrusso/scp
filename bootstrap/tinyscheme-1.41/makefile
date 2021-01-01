@@ -32,9 +32,9 @@ AR= ar crs
 # Linux
 LD = gcc -pg
 LDFLAGS = -shared
-DEBUG=-g -Wno-char-subscripts -O
+DEBUG=-g -Wno-char-subscripts -O2
 SYS_LIBS= -ldl -lm
-PLATFORM_FEATURES= -DSUN_DL=1
+PLATFORM_FEATURES= -DINLINE=inline
 
 # Cygwin
 #PLATFORM_FEATURES = -DUSE_STRLWR=0
