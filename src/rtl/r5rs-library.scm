@@ -782,21 +782,32 @@
           (else
            1)))
 
-  (define (iter-fast result remainder denominator depth)
+  (define (iter-fast result remainder denominator depth last-depth)
+    ;(display (list 'iter-fast result remainder denominator depth last-depth))
+    ;(newline)
     (let ((next (* denominator depth)))
-      (if (< next remainder)
-          (iter-fast (+ result depth)
-                     (- remainder next)
+      (if (> next depth) ; this is a multiply overflow
+          (if (< next remainder)
+              (iter-fast (+ result depth)
+                         (- remainder next)
+                         denominator
+                         next
+                         depth)
+              (iter-slow result remainder denominator))
+          (iter-fast (+ result last-depth) ; depth can't get bigger, so keep iterating at current depth
+                     (- remainder depth)
                      denominator
-                     next)
-          (iter-slow result remainder denominator))))
+                     depth
+                     last-depth))))
 
   (define (iter-slow result remainder denominator)
     (if (< remainder denominator)
-        result
-        (iter-fast (+ result 1) (- remainder denominator) denominator 1)))
+        (begin ;(display (list 'iter-slow-result result))
+               ;(newline)
+               result)
+        (iter-fast (+ result 1) (- remainder denominator) denominator 1 0)))
 
-  (let ((result (iter-fast 0 (abs numerator) (abs denominator) 1)))
+  (let ((result (iter-fast 0 (abs numerator) (abs denominator) 1 0)))
     (if (= (sign numerator) (sign denominator))
         result
         (- 0 result))))
@@ -825,6 +836,8 @@
   ;; library procedure.  However right now we provide only a simple
   ;; integer implementation as a library procedure.
   (define (iter x result radix)
+    ;(display (list 'iter x result radix))
+    ;(newline)
     (if (zero? x)
         (if (null? result)
             (list->string (list #\0))
@@ -835,9 +848,13 @@
               radix)))
 
   (define (inner x radix)
-    (if (and (= x -2147483648)
-             (= radix 10))
-        "-2147483648"
+    (if (= x -2147483648)
+        (case radix
+          ((2) "-10000000000000000000000000000000")
+          ((8) "-20000000000")
+          ((10) "-2147483648")
+          ((16) "-80000000")
+          (else (error "number->string - Invalid radix specified" radix)))
         (let ((s (iter (abs x) '() radix)))
           (if (negative? x)
               (string-append "-" s)
@@ -850,7 +867,7 @@
              (case (car args)
                ((2 8 10 16) #f)
                (else #t)))
-         (error "Invalid radix specified" args))
+         (error "number->string Invalid radix specified" args))
         (else
          (inner z (car args)))))
 
