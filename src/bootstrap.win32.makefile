@@ -328,6 +328,32 @@ DEPEND_JAVA_TEST_OUTPUT_FILES=\
   out/bootstrap/test/java/TreeVisitor.out \
   out/bootstrap/test/java/TwoArgs.out
 
+DEPEND_JAVA_TEST_DIFF_FILES=\
+  out/bootstrap/test/java/Arrays.diff \
+  out/bootstrap/test/java/BinarySearch.diff \
+  out/bootstrap/test/java/BinaryTree.diff \
+  out/bootstrap/test/java/Bitwise.diff \
+  out/bootstrap/test/java/BubbleSort.diff \
+  out/bootstrap/test/java/CharString.diff \
+  out/bootstrap/test/java/Count.diff \
+  out/bootstrap/test/java/CtorTest.diff \
+  out/bootstrap/test/java/Factorial.diff \
+  out/bootstrap/test/java/LinearSearch.diff \
+  out/bootstrap/test/java/LinkedList.diff \
+  out/bootstrap/test/java/Messy.diff \
+  out/bootstrap/test/java/MyFactorial.diff \
+  out/bootstrap/test/java/NumberToString.diff \
+  out/bootstrap/test/java/ObjArray.diff \
+  out/bootstrap/test/java/OpEquals.diff \
+  out/bootstrap/test/java/OverrideTest.diff \
+  out/bootstrap/test/java/QuickSort.diff \
+  out/bootstrap/test/java/Rectangles.diff \
+  out/bootstrap/test/java/StaticMembers.diff \
+  out/bootstrap/test/java/StaticMethods.diff \
+  out/bootstrap/test/java/SubExp.diff \
+  out/bootstrap/test/java/TreeVisitor.diff \
+  out/bootstrap/test/java/TwoArgs.diff
+
 DEPEND_JAVA_TEST_EXE_FILES=\
   $(subst %.out,%.exe,$(DEPEND_JAVA_TEST_OUTPUT_FILES))
 
@@ -483,10 +509,14 @@ out/bootstrap/test/java/%.exe: out/bootstrap/test/java/%.obj rtl/mjrtl.c $(DEPEN
 	gcc -Irtl rtl/mjrtl.c $(DEPEND_MJ_RTL_OBJS) $< -o $@
 
 out/bootstrap/test/java/%.out: out/bootstrap/test/java/%.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
-$(DEPEND_JAVA_TEST_MARKER): $(BOOTSTRAP_TEST_JAVA_DIR) $(DEPEND_JAVA_TEST_OUTPUT_FILES) $(DEPEND_JAVA_TEST_EXE_FILES)
+out/bootstrap/test/java/%.diff: out/bootstrap/test/java/%.out tests/baseline/%.actual
+	fc.exe $(subst /,\,$<) $(subst /,\,$(patsubst out/bootstrap/test/java/%.out,tests/baseline/%.actual,$<))
+	cmd.exe /c "echo same>$(subst /,\,$@)"
+
+$(DEPEND_JAVA_TEST_MARKER): $(BOOTSTRAP_TEST_JAVA_DIR) $(DEPEND_JAVA_TEST_OUTPUT_FILES) $(DEPEND_JAVA_TEST_EXE_FILES) $(DEPEND_JAVA_TEST_OUTPUT_FILES)
 	cmd.exe /c "echo tests.done>out\bootstrap\test\java\tests.done"
 
 # java GC "stress" tests
