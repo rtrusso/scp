@@ -19,9 +19,9 @@ echo ##########################################################################
 echo ## Scheme and SASM Tool Bootstrap
 echo ##########################################################################
 
-REM call make -f bootstrap.win32.makefile out/bootstrap/test/java/tests.done out/bootstrap/test/java/gc/tests.done
+call make -f bootstrap.win32.makefile out/bootstrap/test/java/tests.done out/bootstrap/test/java/gc/tests.done
 REM call make -f bootstrap.win32.makefile out/bootstrap/test/java/CtorTest.diff
-call make -f bootstrap.win32.makefile out/bootstrap/test/java/tests.done
+REM call make -f bootstrap.win32.makefile out/bootstrap/test/java/tests.done
 if not exist out\bootstrap\sasm.exe exit /b 1
 if not exist out\bootstrap\sasm-opt.exe exit /b 1
 if not exist out\bootstrap\schemec.exe exit /b 1

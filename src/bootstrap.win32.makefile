@@ -536,7 +536,7 @@ out/bootstrap/test/java/gc/%.exe: out/bootstrap/test/java/gc/%.obj rtl/mjrtl.c $
 	gcc -Irtl rtl/mjrtl.c $(DEPEND_MJ_RTL_OBJS) $< -o $@
 
 out/bootstrap/test/java/gc/%.out: out/bootstrap/test/java/gc/%.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 $(DEPEND_JAVA_GC_TEST_MARKER): $(BOOTSTRAP_TEST_JAVA_GC_DIR) $(DEPEND_JAVA_GC_TEST_FILES)
@@ -563,7 +563,7 @@ out/bootstrap/test/call.out: out/bootstrap/test/call.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/call.diff: out/bootstrap/test/call.out tests\baseline\call.sasm-interp.actual
-	diff --strip-trailing-cr out/bootstrap/test/call.out tests\baseline\call.sasm-interp.actual
+	fc.exe $(subst /,\,$<) tests\baseline\call.sasm-interp.actual
 	cmd.exe /c "echo same>out\bootstrap\test\call.diff"
 
 # Test scheme-compiler: apply
@@ -587,7 +587,7 @@ out/bootstrap/test/apply.out: out/bootstrap/test/apply.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/apply.diff: out/bootstrap/test/apply.out tests\baseline\apply-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/apply.out tests\baseline\apply-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\apply-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\apply.diff"
 
 # Test scheme-compiler: getenv
@@ -611,7 +611,7 @@ out/bootstrap/test/getenv.out: out/bootstrap/test/getenv.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/getenv.diff: out/bootstrap/test/getenv.out tests\baseline\getenv-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/getenv.out tests\baseline\getenv-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\getenv-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\getenv.diff"
 
 # Test scheme-compiler: cseconds
@@ -655,7 +655,7 @@ out/bootstrap/test/stat.out: out/bootstrap/test/stat.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/stat.diff: out/bootstrap/test/stat.out tests\baseline\stat-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/stat.out tests\baseline\stat-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\stat-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\stat.diff"
 
 # Test scheme-compiler: delete
@@ -681,7 +681,7 @@ out/bootstrap/test/delete.out: out/bootstrap/test/delete.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/delete.diff: out/bootstrap/test/delete.out tests\baseline\delete-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/delete.out tests\baseline\delete-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\delete-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\delete.diff"
 
 # Test scheme-compiler: rename
@@ -709,7 +709,7 @@ out/bootstrap/test/rename.out: out/bootstrap/test/rename.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/rename.diff: out/bootstrap/test/rename.out tests\baseline\rename-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/rename.out tests\baseline\rename-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\rename-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\rename.diff"
 
 # Test scheme-compiler: argv
@@ -733,7 +733,7 @@ out/bootstrap/test/argv.out: out/bootstrap/test/argv.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/argv.diff: out/bootstrap/test/argv.out tests\baseline\argv-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/argv.out tests\baseline\argv-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\argv-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\argv.diff"
 
 # Test scheme-compiler: disptest
@@ -757,7 +757,7 @@ out/bootstrap/test/disptest.out: out/bootstrap/test/disptest.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/disptest.diff: out/bootstrap/test/disptest.out tests\baseline\disptest-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/disptest.out tests\baseline\disptest-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\disptest-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\disptest.diff"
 
 # Test scheme-compiler: disptest2
@@ -781,7 +781,7 @@ out/bootstrap/test/disptest2.out: out/bootstrap/test/disptest2.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/disptest2.diff: out/bootstrap/test/disptest2.out tests\baseline\disptest2-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/disptest2.out tests\baseline\disptest2-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\disptest2-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\disptest2.diff"
 
 # Test scheme-compiler: outputfile
@@ -805,8 +805,8 @@ out/bootstrap/test/outputfile.out: out/bootstrap/test/outputfile.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/outputfile.diff: out/bootstrap/test/outputfile.out tests\baseline\outputfile-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/outputfile.out tests\baseline\outputfile-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/outputfile.dat tests\baseline\outputfile.dat
+	fc.exe $(subst /,\,$<) tests\baseline\outputfile-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\outputfile.dat
 	cmd.exe /c "echo same>out\bootstrap\test\outputfile.diff"
 
 # Test scheme-compiler: inputfile
@@ -830,7 +830,7 @@ out/bootstrap/test/inputfile.out: out/bootstrap/test/inputfile.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/inputfile.diff: out/bootstrap/test/inputfile.out tests\baseline\inputfile-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/inputfile.out tests\baseline\inputfile-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\inputfile-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\inputfile.diff"
 
 # Test scheme-compiler: read
@@ -857,7 +857,7 @@ out/bootstrap/test/read.out: out/bootstrap/test/read.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/read.diff: out/bootstrap/test/read.out tests\baseline\read-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/read.out tests\baseline\read-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\read-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\read.diff"
 
 # Test scheme-compiler: read2
@@ -884,7 +884,7 @@ out/bootstrap/test/read2.out: out/bootstrap/test/read2.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/read2.diff: out/bootstrap/test/read2.out tests\baseline\read2-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/read2.out tests\baseline\read2-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\read2-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\read2.diff"
 
 # Test scheme-compiler: read3
@@ -911,7 +911,7 @@ out/bootstrap/test/read3.out: out/bootstrap/test/read3.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/read3.diff: out/bootstrap/test/read3.out tests\baseline\read3-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/read3.out tests\baseline\read3-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\read3-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\read3.diff"
 
 
@@ -939,7 +939,7 @@ out/bootstrap/test/peekchar.out: out/bootstrap/test/peekchar.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/peekchar.diff: out/bootstrap/test/peekchar.out tests\baseline\peekchar-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/peekchar.out tests\baseline\peekchar-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\peekchar-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\peekchar.diff"
 
 # Test scheme-compiler: mkvec
@@ -963,7 +963,7 @@ out/bootstrap/test/mkvec.out: out/bootstrap/test/mkvec.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/mkvec.diff: out/bootstrap/test/mkvec.out tests\baseline\mkvec-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/mkvec.out tests\baseline\mkvec-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\mkvec-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\mkvec.diff"
 
 # Test scheme-compiler: eqv
@@ -990,7 +990,7 @@ out/bootstrap/test/eqv.out: out/bootstrap/test/eqv.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/eqv.diff: out/bootstrap/test/eqv.out tests\baseline\eqv-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/eqv.out tests\baseline\eqv-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\eqv-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\eqv.diff"
 
 # Test scheme-compiler: eq
@@ -1017,7 +1017,7 @@ out/bootstrap/test/eq.out: out/bootstrap/test/eq.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/eq.diff: out/bootstrap/test/eq.out tests\baseline\eq-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/eq.out tests\baseline\eq-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\eq-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\eq.diff"
 
 # Test scheme-compiler: vararg
@@ -1044,7 +1044,7 @@ out/bootstrap/test/vararg.out: out/bootstrap/test/vararg.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/vararg.diff: out/bootstrap/test/vararg.out tests\baseline\vararg-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/vararg.out tests\baseline\vararg-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\vararg-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\vararg.diff"
 
 # Test scheme-compiler: letrec
@@ -1071,7 +1071,7 @@ out/bootstrap/test/letrec.out: out/bootstrap/test/letrec.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 #out/bootstrap/test/letrec.diff: out/bootstrap/test/letrec.out tests\baseline\letrec-s.actual
-#	diff --strip-trailing-cr out/bootstrap/test/letrec.out tests\baseline\letrec-s.actual
+#	fc.exe $(subst /,\,$<) tests\baseline\letrec-s.actual
 #	cmd.exe /c "echo same>out\bootstrap\test\letrec.diff"
 
 # Test scheme-compiler: read4
@@ -1098,7 +1098,7 @@ out/bootstrap/test/read4.out: out/bootstrap/test/read4.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/read4.diff: out/bootstrap/test/read4.out tests\baseline\read4-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/read4.out tests\baseline\read4-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\read4-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\read4.diff"
 
 # Test scheme-compiler: read5
@@ -1125,7 +1125,7 @@ out/bootstrap/test/read5.out: out/bootstrap/test/read5.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/read5.diff: out/bootstrap/test/read5.out tests\baseline\read5-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/read5.out tests\baseline\read5-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\read5-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\read5.diff"
 
 # Test scheme-compiler: sym1
@@ -1152,7 +1152,7 @@ out/bootstrap/test/sym1.out: out/bootstrap/test/sym1.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/sym1.diff: out/bootstrap/test/sym1.out tests\baseline\sym1-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/sym1.out tests\baseline\sym1-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\sym1-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\sym1.diff"
 
 # Test scheme-compiler: badapply
@@ -1179,7 +1179,7 @@ out/bootstrap/test/badapply.out: out/bootstrap/test/badapply.exe tests/badapply.
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/badapply.diff: out/bootstrap/test/badapply.out tests\baseline\badapply-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/badapply.out tests\baseline\badapply-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\badapply-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\badapply.diff"
 
 out/bootstrap/test/badvrhi.out: out/bootstrap/test/badvrhi.exe tests/badvrhi.cmd
@@ -1264,7 +1264,7 @@ out/bootstrap/test/gc1.out: out/bootstrap/test/gc1.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 # out/bootstrap/test/gc1.diff: out/bootstrap/test/gc1.out tests\baseline\gc1-s.actual
-# 	diff --strip-trailing-cr out/bootstrap/test/gc1.out tests\baseline\gc1-s.actual
+# 	fc.exe $(subst /,\,$<) tests\baseline\gc1-s.actual
 # 	cmd.exe /c "echo same>out\bootstrap\test\gc1.diff"
 
 out/bootstrap/test/r5rs3.out: out/bootstrap/test/r5rs3.exe
@@ -1295,7 +1295,7 @@ out/bootstrap/test/%.out: out/bootstrap/test/%.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/%.diff: out/bootstrap/test/%.out tests/baseline/%-s.actual
-	diff --strip-trailing-cr $< $(patsubst out/bootstrap/test/%.out,tests/baseline/%-s.actual,$<)
+	fc.exe $(subst /,\,$<) $(patsubst out/bootstrap/test/%.out,tests/baseline/%-s.actual,$<)
 	cmd.exe /c "echo same>$(subst /,\,$@)"
 
 
