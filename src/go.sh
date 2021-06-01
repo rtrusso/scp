@@ -29,7 +29,7 @@ echo ==========================================================================
 #make -f bootstrap.linux.makefile out/bootstrap/test/java/CtorTest.diff
 #make -f bootstrap.linux.makefile out/bootstrap/test/java/TwoArgs.diff
 #make -f bootstrap.linux.makefile out/bootstrap/test/java/tests.done
-make -f bootstrap.linux.makefile out/bootstrap/test/java/tests.done out/bootstrap/test/java/gc/tests.done
+make -f bootstrap.linux.makefile out/bootstrap/test/java/tests.done out/bootstrap/test/java/gc/tests.done out/bootstrap/test/schemec-tests.done
 #make -f bootstrap.linux.makefile out/bootstrap/test/n2s.diff
 if [ $? -ne 0 ]; then exit $?; fi
 if [ ! -f out/bootstrap/sasm.exe ]; then exit 1; fi
