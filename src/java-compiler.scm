@@ -77,6 +77,15 @@
                 (run-codegen-analysis master-program env)
                 (codegen master-program env (tag 'context `((main-class ,main-class)))))))))
 
+(define (compile-multiple-as-library programs)
+  (let ((asts (map (lambda (file) (call-with-input-file file parse-port)) programs)))
+    (and (all? (lambda (x) x) asts)
+         (let* ((master-program (merge-multiple-programs asts))
+                (env (run-typecheck master-program)))
+           (and env
+                (run-codegen-analysis master-program env)
+                (codegen master-program env (tag 'context `((omit-main-class #t)))))))))
+
 (cond ((= 1 (vector-length *argv*))
        (compile (current-input-port)))
       ((= 2 (vector-length *argv*))
@@ -96,6 +105,19 @@
                          (else #t)))
                       (cddr (vector->list *argv*)))))
          (compile-multiple main-class-name args)))
+      ((and (>= (vector-length *argv*) 3)
+            (string=? (vector-ref *argv* 1) "-l"))
+       (let ((args
+              (filter (lambda (arg)
+                        (cond
+                         ((starts-with? arg "--out=")
+                          (set! *output-port*
+                                (open-output-file (string-strip-prefix arg
+                                                                       "--out=")))
+                          #f)
+                         (else #t)))
+                      (cddr (vector->list *argv*)))))
+         (compile-multiple-as-library args)))
       (else
        (error "Invalid command line " *argv*)))
 

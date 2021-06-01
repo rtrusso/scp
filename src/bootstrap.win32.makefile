@@ -292,7 +292,8 @@ DEPEND_SCHEME_RTL_OMIT_MAIN=\
   out/bootstrap/r5rs-library.obj \
   out/bootstrap/r5rs-native.obj \
   out/bootstrap/r5rs-wrap.obj \
-  out/bootstrap/rtlscheme.obj
+  out/bootstrap/rtlscheme.obj \
+  out/bootstrap/scheme.obj
 
 DEPEND_SCHEME_RTL=\
   $(DEPEND_SCHEME_RTL_OMIT_MAIN) \
@@ -463,7 +464,7 @@ out/bootstrap/test/syntax1-expanded.scm : $(SCHEMEC_FLAT_TS) tests/syntax1.scm $
 out/bootstrap-expand-java-compiler-ts.cmd : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_java_compiler)
 	$(SCHEME) needc-ts.scm --script-mode --windows-mode --expand-only --output out\bootstrap-expand-java-compiler-ts.cmd java-compiler-ts
 
-out/java-compiler-expanded.out: out/bootstrap-expand-java-compiler-ts.cmd $(DEPEND_SCHEMEC)
+out/java-compiler-expanded.out: out/bootstrap-expand-java-compiler-ts.cmd $(DEPEND_SCHEMEC) $(BOOTSTRAP_DIR)
 	cmd.exe /c "call env & call out\bootstrap-expand-java-compiler-ts.cmd"
 	cmd.exe /c "echo expanded>out\java-compiler-expanded.out"
 
@@ -485,7 +486,7 @@ out/sasm-opt-flat-ts.scm : out/sasm-opt-ts-expanded.out
 out/bootstrap-expand-sasm-ts.cmd : sasm.scm $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm)
 	$(SCHEME) needc-ts.scm --script-mode --windows-mode --expand-only --output out\bootstrap-expand-sasm-ts.cmd sasm-ts
 
-out/sasm-ts-expanded.out: out/bootstrap-expand-sasm-ts.cmd env.cmd $(DEPEND_SCHEMEC)
+out/sasm-ts-expanded.out: out/bootstrap-expand-sasm-ts.cmd env.cmd $(DEPEND_SCHEMEC) $(BOOTSTRAP_DIR)
 	cmd.exe /c "call env.cmd & call out\bootstrap-expand-sasm-ts.cmd"
 	cmd.exe /c "echo expanded>out\sasm-ts-expanded.out"
 
@@ -516,7 +517,7 @@ out/bootstrap/test/java/%.diff: out/bootstrap/test/java/%.out tests/baseline/%.a
 	fc.exe $(subst /,\,$<) $(subst /,\,$(patsubst out/bootstrap/test/java/%.out,tests/baseline/%.actual,$<))
 	cmd.exe /c "echo same>$(subst /,\,$@)"
 
-$(DEPEND_JAVA_TEST_MARKER): $(BOOTSTRAP_TEST_JAVA_DIR) $(DEPEND_JAVA_TEST_OUTPUT_FILES) $(DEPEND_JAVA_TEST_EXE_FILES) $(DEPEND_JAVA_TEST_OUTPUT_FILES)
+$(DEPEND_JAVA_TEST_MARKER): $(BOOTSTRAP_TEST_JAVA_DIR) $(DEPEND_JAVA_TEST_OUTPUT_FILES) $(DEPEND_JAVA_TEST_EXE_FILES) $(DEPEND_JAVA_TEST_DIFF_FILES)
 	cmd.exe /c "echo tests.done>out\bootstrap\test\java\tests.done"
 
 # java GC "stress" tests
@@ -1336,6 +1337,12 @@ out/bootstrap/debug.asm: rtl/debug.asm
 out/bootstrap/%.asm: out/bootstrap/%.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) $< --out=$@
 
+out/bootstrap/scheme.sasm : rtl/scheme.java $(DEPEND_JAVAC)
+	$(JAVAC) -l --out=$@ rtl/scheme.java
+
+out/bootstrap/scheme.sasm-opt: out/bootstrap/scheme.sasm $(DEPEND_SASMOPT)
+	$(SASMOPT) $< --out=$@
+
 # bootstrap sasm tool
 out/bootstrap-sasm-ts.cmd : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm)
 	$(SCHEME) needc-ts.scm --script-mode --windows-mode --output out\bootstrap-sasm-ts.cmd sasm
@@ -1352,7 +1359,7 @@ out/bootstrap/sasm.exe: $(DEPEND_RTL) $(DEPEND_SCHEME_RTL_OMIT_MAIN) out/sasm-bo
 out/bootstrap-sasm-opt-ts.cmd : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm_opt)
 	$(SCHEME) needc-ts.scm --script-mode --windows-mode --output out\bootstrap-sasm-opt-ts.cmd sasm-opt
 
-out/sasm-opt-bootstrap.out: out/bootstrap-sasm-opt-ts.cmd $(DEPEND_SCHEMEC)
+out/sasm-opt-bootstrap.out: out/bootstrap-sasm-opt-ts.cmd $(DEPEND_SCHEMEC) $(BOOTSTRAP_DIR)
 	cmd.exe /c "call env.cmd & call out\bootstrap-sasm-opt-ts.cmd"
 	cmd.exe /c "echo bootstrapped>out\sasm-opt-bootstrap.out"
 
