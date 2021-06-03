@@ -786,7 +786,7 @@
     ;(display (list 'iter-fast result remainder denominator depth last-depth))
     ;(newline)
     (let ((next (* denominator depth)))
-      (if (> next depth) ; this is a multiply overflow
+      (if (> next depth) ; this is a multiply overflow, or denom=1
           (if (< next remainder)
               (iter-fast (+ result depth)
                          (- remainder next)
@@ -794,11 +794,14 @@
                          next
                          depth)
               (iter-slow result remainder denominator))
-          (iter-fast (+ result last-depth) ; depth can't get bigger, so keep iterating at current depth
-                     (- remainder depth)
-                     denominator
-                     depth
-                     last-depth))))
+          (if (and (> last-depth 0) (< depth remainder))
+              (iter-fast (+ result last-depth) ; depth can't get bigger, so keep iterating at current depth
+                         (- remainder depth)
+                         denominator
+                         depth
+                         last-depth)
+              (iter-slow result remainder denominator)
+              ))))
 
   (define (iter-slow result remainder denominator)
     (if (< remainder denominator)
@@ -807,10 +810,14 @@
                result)
         (iter-fast (+ result 1) (- remainder denominator) denominator 1 0)))
 
-  (let ((result (iter-fast 0 (abs numerator) (abs denominator) 1 0)))
-    (if (= (sign numerator) (sign denominator))
-        result
-        (- 0 result))))
+  (if (zero? denominator)
+      (error "quotient - zero denominator"))
+  (if (= 1 denominator)
+      numerator
+      (let ((result (iter-fast 0 (abs numerator) (abs denominator) 1 0)))
+        (if (= (sign numerator) (sign denominator))
+            result
+            (- 0 result)))))
 
 (define (remainder numerator denominator)
   (let ((q (quotient numerator denominator)))
@@ -831,6 +838,74 @@
         (+ denominator r))))
 
 (define (number->string z . args)
+  (define (x86-32-bit-intconst x)
+    (if (>= x 0)
+        (number->string x 16)
+        (let ((bin (string->list (number->string (- x) 2))))
+          (define (fix-bin)
+            ;; needed to detect overflow when there is no tower
+            (if (and (pair? bin) (char=? (car bin) #\-))
+                (cdr bin)
+                bin))
+          ;(display "bin: ")
+          ;(display bin)
+          ;(newline)
+          (let ((fixed-bin (fix-bin)))
+            ;(display "fixed-bin: ")
+            ;(display fixed-bin)
+            ;(newline)
+            (let loop ((len (length fixed-bin))
+                     (res fixed-bin))
+              ;(display "loop len:")
+              ;(display len)
+              ;(newline)
+              (if (< len 32)
+                  (loop (+ len 1) (cons #\0 res))
+                  (let ((negated (map (lambda (x) (if (char=? x #\0) 1 0)) res)))
+                    ;(display "negated: ")
+                    ;(display negated)
+                    ;(newline)
+                    (let ((neg-rev (reverse negated)))
+                      (let ((twos-comp
+                             (let add-1 ((cur neg-rev))
+                               (if (null? cur)
+                                   (reverse neg-rev)
+                                   (if (= 0 (car cur))
+                                       (begin (set-car! cur 1)
+                                              (reverse neg-rev))
+                                       (begin (set-car! cur 0)
+                                              (add-1 (cdr cur))))))))
+                        ;(display "twos-comp: ")
+                        ;(display twos-comp)
+                        ;(newline)
+                        (let loop2 ((res '())
+                                    (data twos-comp))
+                          (if (null? data)
+                              (list->string (reverse res))
+                              (let* ((x (car data))
+                                     (x2 (cdr data))
+                                     (y (car x2))
+                                     (y2 (cdr x2))
+                                     (z (car y2))
+                                     (z2 (cdr y2))
+                                     (w (car z2))
+                                     (w2 (cdr z2)))
+                                ;(display "x:")
+                                ;(display x)
+                                ;(display " y:")
+                                ;(display y)
+                                ;(display " z:")
+                                ;(display z)
+                                ;(display " w:")
+                                ;(display w)
+                                ;(newline)
+                                ;(display w2)
+                                ;(newline)
+                                (loop2
+                                 (cons (list-ref '(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\a #\b #\c #\d #\e #\f)
+                                                 (+ (* 8 x) (* 4 y) (* 2 z) w))
+                                       res)
+                                 w2)))))))))))))
   (define chars "0123456789abcdef")
   ;; Note that R5RS defines number->string as a procedure and not a
   ;; library procedure.  However right now we provide only a simple
@@ -869,7 +944,9 @@
                (else #t)))
          (error "number->string Invalid radix specified" args))
         (else
-         (inner z (car args)))))
+         (if (and (< z 0) (= 16 (car args)))
+             (x86-32-bit-intconst z)
+             (inner z (car args))))))
 
 (define (/ z . args)
   (define (iter result args)

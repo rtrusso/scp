@@ -26,10 +26,8 @@ echo ==========================================================================
 echo == Scheme and SASM Tool Bootstrap
 echo ==========================================================================
 
-#make -f bootstrap.linux.makefile out/bootstrap/test/java/CtorTest.diff
-#make -f bootstrap.linux.makefile out/bootstrap/test/java/TwoArgs.diff
-#make -f bootstrap.linux.makefile out/bootstrap/test/java/tests.done
-make -f bootstrap.linux.makefile out/bootstrap/test/java/tests.done out/bootstrap/test/java/gc/tests.done out/bootstrap/test/schemec-tests.done
+make -f bootstrap.linux.makefile out/bootstrap/test/disptest.diff out/bootstrap/test/disptest2.diff out/bootstrap/test/disp1.diff out/bootstrap/test/disp2.diff out/bootstrap/test/n2s.diff out/bootstrap/test/n2s2.diff out/bootstrap/test/quot2.diff out/bootstrap/test/opdiv.diff out/bootstrap/test/java/tests.done out/bootstrap/test/java/gc/tests.done out/bootstrap/test/schemec-tests.done
+#make -f bootstrap.linux.makefile out/bootstrap/test/java/tests.done out/bootstrap/test/java/gc/tests.done out/bootstrap/test/schemec-tests.done
 #make -f bootstrap.linux.makefile out/bootstrap/test/n2s.diff
 if [ $? -ne 0 ]; then exit $?; fi
 if [ ! -f out/bootstrap/sasm.exe ]; then exit 1; fi
