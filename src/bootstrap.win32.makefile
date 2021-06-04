@@ -293,6 +293,7 @@ DEPEND_SCHEME_RTL_OMIT_MAIN=\
   out/bootstrap/r5rs-native.obj \
   out/bootstrap/r5rs-wrap.obj \
   out/bootstrap/rtlscheme.obj \
+  out/bootstrap/scheme-java.obj \
   out/bootstrap/scheme.obj
 
 DEPEND_SCHEME_RTL=\
@@ -410,6 +411,7 @@ DEPEND_ALL=\
   $(DEPEND_JAVA_GC_TEST_MARKER) \
   $(DEPEND_JAVA_GC_TEST_FILES) \
   $(DEPEND_SCHEMEC_TEST_MARKER) \
+  $(DEPEND_SCHEME_RTL) \
   \
   out/bootstrap-sasm-ts.cmd \
   out/sasm-bootstrap.out \

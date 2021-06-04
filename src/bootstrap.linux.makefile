@@ -300,7 +300,9 @@ DEPEND_SCHEME_RTL_OMIT_MAIN=\
   out/bootstrap/r5rs-library.o \
   out/bootstrap/r5rs-native.o \
   out/bootstrap/r5rs-wrap.o \
-  out/bootstrap/rtlscheme.o
+  out/bootstrap/rtlscheme.o \
+  out/bootstrap/scheme-java.o \
+  out/bootstrap/scheme.o
 
 DEPEND_SCHEME_RTL=\
   $(DEPEND_SCHEME_RTL_OMIT_MAIN) \
@@ -417,6 +419,7 @@ DEPEND_ALL=\
   $(DEPEND_JAVA_GC_TEST_MARKER) \
   $(DEPEND_JAVA_GC_TEST_FILES) \
   $(DEPEND_SCHEMEC_TEST_MARKER) \
+  $(DEPEND_SCHEME_RTL) \
   \
   out/bootstrap-sasm-ts.sh \
   out/sasm-bootstrap.out \
@@ -1350,6 +1353,12 @@ out/bootstrap/debug.asm: rtl/debug.asm
 
 out/bootstrap/%.asm: out/bootstrap/%.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) $< --out=$@
+
+out/bootstrap/scheme.sasm : rtl/scheme.java $(DEPEND_JAVAC)
+	$(JAVAC) -l --out=$@ rtl/scheme.java
+
+out/bootstrap/scheme.sasm-opt: out/bootstrap/scheme.sasm $(DEPEND_SASMOPT)
+	$(SASMOPT) $< --out=$@
 
 # bootstrap sasm tool
 out/bootstrap-sasm-ts.sh : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm)

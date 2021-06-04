@@ -193,3 +193,8 @@ int SYM(c_scheme_current_milliseconds)() {
     return millisec;
 #endif
 }
+
+void SYM(c_scheme_error_stub)() {
+    _ftprintf(stderr, TEXT("one of the scheme.java __sasm_impl functions was called, currently unsupported"));
+    ExitProcess(1);
+}
