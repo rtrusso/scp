@@ -62,8 +62,11 @@
     (if (and *emit-entry*
              (top-level-compiler-context?))
         (begin
+          ;; (extern $java-library-entry)
           ;; (extern $scheme-entry:rtl/r5rs-wrap)
           ;; (extern $scheme-entry:rtl/r5rs-library)
+          (scheme-codegen-emit! (insn-seq '() '()
+                                          `((extern $java-library-entry))))
           (scheme-codegen-emit! (insn-seq '() '()
                                           `((extern $scheme-entry:rtl/r5rs-wrap))))
           (scheme-codegen-emit! (insn-seq '() '()
@@ -100,7 +103,8 @@
           (insn-seq '()
                     `(accum operand index
                             ,(cadr (env-register)) ,(cadr (link-register)))
-                    `((perform (op call) (const $scheme-entry:rtl/r5rs-wrap))
+                    `((perform (op call) (const $java-library-entry))
+                      (perform (op call) (const $scheme-entry:rtl/r5rs-wrap))
                       (perform (op call) (const $scheme-entry:rtl/r5rs-library))))
           (empty-insn-seq))
       (codegen-entry-chain *top-level-dependencies*)
