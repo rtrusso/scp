@@ -36,21 +36,59 @@
                `(extern cp-mj-system-out-println))
     (emit-code ctx
                `(extern cp-rtl-array-length))
-    (emit-code ctx
-               `(export mm-rtl-heap-begin-mark-global-vars))
-    (emit-code ctx
-               `(export mm-rtl-heap-end-mark-global-vars))
     (if (not omit-main-class?)
-        (emit-code ctx
-                   `(entry ,(get-entry-point main-class))))
-    (emit-code ctx
-               `(global mm-rtl-heap-begin-mark-global-vars (const 0)))
+        (begin
+          (emit-code ctx
+                     `(export mm-rtl-heap-begin-mark-global-vars))
+          (emit-code ctx
+                     `(export mm-rtl-heap-end-mark-global-vars))
+          (emit-code ctx
+                     `(entry ,(get-entry-point main-class)))
+          (emit-code ctx
+                     `(global mm-rtl-heap-begin-mark-global-vars (const 0))))
+        (begin
+          (emit-code ctx
+                     '(extern cp-rtl-add-global-root-range))
+          (emit-code ctx
+                     '(export $java-library-entry))
+          (emit-code ctx
+                     `(function (name $java-library-entry)
+                                (locals 0)
+                                (body (perform (op push-frame))
+                                      (perform (op reserve-locals) (const 0))
+                                      ,@(insn-seq:insns
+                                         (insn-seq '()
+                                                   '(accum index operand this)
+                                                   `((assign (reg accum) (op load-array) (const begin-mark-global-vars-range) (const 0))
+                                                     (branch-nonzero (label $java-library-entry/exit) (reg accum))
+                                                     (assign (reg accum) (const begin-mark-global-vars-range))
+                                                     (push (reg accum))
+                                                     (perform (op call) (const cp-rtl-add-global-root-range))
+                                                     (label $java-library-entry/exit)
+                                                     (perform (op pop-frame))
+                                                     (return (const 0))
+                                                     )
+                                                   )
+                                         )
+                                      )
+                                ))
+          (emit-code ctx
+                     '(global begin-mark-global-vars-range (const 0)))
+          (emit-code ctx
+                     '(global end-mark-global-vars-range-pointer (label end-mark-global-vars-range)))
+          )
+        )
     (class-info-preamble (@ast p :class-list) env ctx)
     (for-each (lambda (class)
                 (class-preamble class env ctx))
               (@ast p :class-list))
-    (emit-code ctx
-               `(global mm-rtl-heap-end-mark-global-vars (const 0)))
+    (if (not omit-main-class?)
+        (begin
+          (emit-code ctx
+                     `(global mm-rtl-heap-end-mark-global-vars (const 0))))
+        (begin
+          (emit-code ctx
+                     '(global end-mark-global-vars-range (const 0)))))
     (ast-visit p
                (ast-visit-context
                 '(string-constant-expression)
