@@ -1,6 +1,5 @@
 // scheme.java -*-Java-*-
 // Runtime library for Scheme, written in MiniJava
-
 //
 // R5RS primitive types:
 //
@@ -20,8 +19,6 @@
 //  Improper Lambda <-- invoke by array should make this easy
 //  Continuations   <-- CPS before AST transform
 //
-
-
 class scheme
 {
   public static void main( String[] args ) { { } }
@@ -29,17 +26,13 @@ class scheme
 class String
 {
   char[] chars;
-
   public String(char[] c) {
     chars = c;
   }
-
   public char[] toCharArray() {
     return chars;
   }
 }
-
-
 class object
 {
   __sasm_impl public static object[] init_frame( object[] args, object[] frame ) = sasm_scheme_init_frame;
@@ -55,7 +48,6 @@ class object
     i = object.scheme_type_error(s);
     return i;
   }
-
   public static boolean bool_type_error(String s)
   { int i;
     i = object.scheme_type_error(s);
@@ -83,16 +75,14 @@ class object
   }
   public static object[] varargs_type_error(String s)
   { return object.objarr_type_error(s); }
-
-
   /* args is the frame that was allocated for the call. */
   /* req is the number of arguments that the varargs function requires
+
      + 1.  e.g. for (lambda (a b . c) <body>) req is 3. */
   public static object[] init_varargs( object[] args, int req ) {
     int i;
     object list;
     object[] outargs;
-
     if (args.length < req) {
       outargs = object.varargs_type_error("provided too few args to varargs function\n");
     } else {
@@ -120,25 +110,32 @@ class object
     outargs[req] = list;
     return outargs;
   } /* init_varargs */
-
   public static boolean is_list(object head) {
     /* The basic algorithm of this function is to walk through the
+
        list with two iterators simultaneously.  The fast iterator
+
        skips ahead two pairs at each iteration.  The slow iterator
+
        skips ahead one pair at each iteration.  This way, if there is
+
        a cycle, the slow and fast will eventually match.  We can
+
        detect the cycle without additional O(N) memory (where N is the
+
        number of elements in the pair structure). */
     /* If at any time you reach nil (end-of-list) or a non-pair
+
        object, the iteration also completes with a result. */
     boolean result;
     boolean done;
     object slow;
     object fast;
     object next;
-
     /* First we must check to see that the list is at least two
+
        elements; otherwise we can answer trivially, and we do not have
+
        sufficient primer to begin the algorithm. */
     if (head.is_nil()) {
       /* The head element is nil, so we have a trivial answer. */
@@ -146,11 +143,14 @@ class object
     } else {
       if (!head.is_pair()) {
         /* The head element is not a pair, so we have a trivial
+
            answer. */
         result = false;
       } else {
         /* We have enough information to begin the iteration, since we
+
            can initialize the slow iterator to the head and the fast
+
            iterator to one past the head. */
         done = false;
         result = false;
@@ -158,11 +158,17 @@ class object
         fast = head.pair_cdr();
         while (!done) {
           /* We set done to true here pre-emptively; most blocks below
+
              result in done being set to true, and only one results in
+
              it being set to false.  However, we might want to change
+
              this because at run- time most iterations through the
+
              loop will have to assign done, whereas in the opposite
+
              manner only one iteration through the loop would have to
+
              assign done. */
           done = true;
           if (fast == slow) {
@@ -171,41 +177,53 @@ class object
           } else {
             if (slow.is_pair()) {
               /* 'slow' is a pair so we aren't done yet.  Go on and
+
                  check 'fast' to see its status. */
               if (fast.is_pair()) {
                 /* 'slow' and 'fast' are both pairs.  We must look to
+
                    see if it is possible to advance the fast iterator
+
                    forward two pairs.  If not, we have our answer
+
                    trivially. */
                 next = fast.pair_cdr();
                 if (next == slow) {
                   /* We have detected a cycle pre-emptively.  Might as
+
                      well bail here instead of doing more work. */
                   result = false;
                 } else {
                   if (next.is_pair()) {
                     /* We need to iterate and check the next pair. */
                     /* This is the one code path through the iteration
+
                        where we do not terminate. */
                     done = false;
                     slow = slow.pair_cdr();
                     fast = next.pair_cdr();
                   } else {
                     /* 'next' is not a pair.  It is either nil,
+
                        signifying the end of a list, or this is not a
+
                        list. */
                     result = next.is_nil();
                   } /* if */
                 } /* if */
               } else {
                 /* 'fast' is not a pair.  It is either nil,
+
                    signifying the end of a list, or this is not a
+
                    list. */
                 result = fast.is_nil();
               } /* if */
             } else {
               /* 'slow' is not a pair.  It is either nil,
+
                  signifying the end of a list, or this is not a
+
                  list. */
               result = slow.is_nil();
             } /* if */
@@ -215,17 +233,16 @@ class object
     } /* if */
     return result;
   } /* is_list */
-
   public static object[] convert_apply_args_to_array2(object[] fixed, object head) {
     int len;
     int i;
     object curr;
     object[] result;
-
     if (!object.is_list(head)) {
       result = object.objarr_type_error("'apply' requires a proper list\n");
     } else {
       /* Compute the length of the list, adding it to the length of
+
          the fixed array. */
       len = fixed.length;
       curr = head;
@@ -236,6 +253,7 @@ class object
       /* Allocate the new array. */
       result = new object[len];
       /* Assign the elements of the fixed array to the result
+
          array. */
       i = 0;
       while (i < fixed.length) {
@@ -246,6 +264,7 @@ class object
       /* check_assertion(i <= len); */
       /* check_assertion(i < len || head.is_nil()); */
       /* Assign the elements of the argument list to the result
+
          array. */
       curr = head;
       while (i < len) {
@@ -256,16 +275,22 @@ class object
     } /* if */
     return result;
   } /* convert_apply_args_to_array2 */
-
   public static object[] convert_apply_args_to_array(object head) {
     /* 'head' is the list of parameters to Scheme function 'apply'.
+
        This means that the list was built by the runtime library and
+
        is "safe", i.e. we can skip the is_list check.  It also means
+
        that the last element of 'head' is itself an embedded list
+
        (this follows directly from the form of the apply argument list
+
        from r5rs). */
     /* Walk through 'head' and its embedded list, and flatten this out
+
        into a new argument array, which is the return value of the
+
        routine. */
     int len;
     int outer_length;
@@ -273,9 +298,10 @@ class object
     object curr;
     object[] result;
     object last;
-
     /* It is assumed that 'head' is a correct list, since it was built
+
        by the runtime.  We avoid the is_list check here for
+
        efficiency. */
     if (/*!object.is_list(head)*/ false) {
       result = object.objarr_type_error("'apply' requires a proper list\n");
@@ -284,7 +310,9 @@ class object
       len = 0;
       curr = head;
       /* 'last' is initialized to something here to prevent a
+
          warning from javac.  We assume that it will be set in the
+
          loop, or else length will be 0 which is an error. */
       last = head;
       while (!curr.is_nil()) {
@@ -294,6 +322,7 @@ class object
       } /* while */
       if (len == 0) {
         /* The 'apply' function requires at least one argument -- the
+
            embedded list. */
         result = object.objarr_type_error("'apply' requires at least one argument\n");
       } else {
@@ -301,13 +330,16 @@ class object
         len = len - 1;
         outer_length = len;
         /* At this point, 'last' points to the embedded list that will
+
            become the tail of the result array.  We need to ensure this
+
            is a proper list before working with it. */
         curr = last;
         if (!object.is_list(curr)) {
           result = object.objarr_type_error("'apply' requires a proper list\n");
         } else {
           /* Now walk through the embedded list and add its elements to
+
              the required length. */
           while (!curr.is_nil()) {
             len = len + 1;
@@ -316,6 +348,7 @@ class object
           /* Allocate the new array. */
           result = new object[len];
           /* Assign the elements of the argument list to the result
+
              array. */
           curr = head;
           i = 0;
@@ -325,6 +358,7 @@ class object
             curr = curr.pair_cdr();
           } /* while */
           /* Assign the elements of the embedded argument list to the
+
              result array. */
           /* check_assertion(curr.pair_cdr().is_nil()); */
           curr = curr.pair_car();
@@ -338,21 +372,18 @@ class object
     } /* if */
     return result;
   } /* convert_apply_args_to_array */
-
   public static object apply_function(object function, object args)
   {
     object[] argv;
-
     argv = object.convert_apply_args_to_array(args);
     return function.apply(argv);
   } /* apply_function */
-
   public static int list_plus(object head)
   {
     /* Assuming that 'head' is the start of a proper list of integer-type
+
        objects, return the sum of the objects. */
     int val;
-
     val = 0;
     while (!head.is_nil()) {
       val = val + head.pair_car().int_value();
@@ -360,13 +391,12 @@ class object
     } /* while */
     return val;
   } /* list_plus */
-
   public static int list_mul(object head)
   {
     /* Assuming that 'head' is the start of a proper list of integer-type
+
        objects, return the product of the objects. */
     int val;
-
     val = 1;
     while (!head.is_nil()) {
       val = val * head.pair_car().int_value();
@@ -374,11 +404,9 @@ class object
     } /* while */
     return val;
   } /* list_mul */
-
   public static int list_sub(object x, object head)
   {
     int val;
-
     if (head.is_nil()) {
       val = 0-x.int_value();
     } else {
@@ -390,13 +418,11 @@ class object
     } /* if */
     return val;
   } /* list_sub */
-
   public static boolean list_eq(object x, object y, object head)
   {
     int last;
     int curr;
     boolean result;
-
     last = y.int_value();
     result = x.int_value() == last;
     while (result && !head.is_nil()) {
@@ -407,13 +433,11 @@ class object
     } /* while */
     return result;
   } /* list_eq */
-
   public static boolean list_lt(object x, object y, object head)
   {
     int last;
     int curr;
     boolean result;
-
     last = y.int_value();
     result = x.int_value() < last;
     while (result && !head.is_nil()) {
@@ -424,14 +448,12 @@ class object
     } /* while */
     return result;
   } /* list_lt */
-
   public static boolean list_lteq(object x, object y, object head)
   {
     int last;
     int curr;
     int ix;
     boolean result;
-
     last = y.int_value();
     ix = x.int_value();
     result = (!(!(ix < last) && !(ix == last)));
@@ -443,14 +465,12 @@ class object
     } /* while */
     return result;
   } /* list_lteq */
-
   public static boolean list_gt(object x, object y, object head)
   {
     int last;
     int curr;
     int ix;
     boolean result;
-
     last = y.int_value();
     ix = x.int_value();
     result = (!(ix < last) && !(ix == last));
@@ -462,13 +482,11 @@ class object
     } /* while */
     return result;
   } /* list_gt */
-
   public static boolean list_gteq(object x, object y, object head)
   {
     int last;
     int curr;
     boolean result;
-
     last = y.int_value();
     result = !(x.int_value() < last);
     while (result && !head.is_nil()) {
@@ -479,7 +497,6 @@ class object
     } /* while */
     return result;
   } /* list_gteq */
-
   public static int string_to_number(char[] str, int radix) {
     int val;
     int idx;
@@ -488,7 +505,6 @@ class object
     int stop;
     int power;
     boolean negative;
-
     if (0-1 < radix && radix < 17 && 0 < str.length) {
       val = 0;
       power = 1;
@@ -533,7 +549,6 @@ class object
     } /* if */
     return val;
   } /* string_to_number */
-
   public static char[] number_to_string(int val, int radix) {
     String digits_string;
     char[] digits;
@@ -544,7 +559,6 @@ class object
     int remainder;
     int idx;
     boolean negative;
-
     digits_count = 0;
     digits_string = "0123456789abcdef";
     digits = digits_string.toCharArray();
@@ -596,24 +610,19 @@ class object
     } /* if */
     return result;
   } /* number_to_string */
-
   // common //////////////////////////////////////////////////////////
   public boolean eq( object o ) { return this == o; }
   public boolean eqv( object o ) { return this.eq( o ); }
   public boolean equal( object o ) { return this.eqv( o ); }
-
   // procedure ///////////////////////////////////////////////////////
   public boolean is_proc() { return false; }
   public object apply( object[] args ) { return object.obj_type_error("attempt to invoke a non-procedure\n"); }
-
   // bool ////////////////////////////////////////////////////////////
   public boolean is_bool() { return false; }
   public boolean bool_value() { return object.bool_type_error("expected a boolean\n"); }
-
   // int /////////////////////////////////////////////////////////////
   public boolean is_int() { return false; }
   public int int_value() { return object.int_type_error("expected an int\n"); }
-
   // char ////////////////////////////////////////////////////////////
   public boolean is_char() { return false; }
   public char char_value() { return object.char_type_error("expected a character\n"); }
@@ -623,68 +632,55 @@ class object
   public boolean char_lte( char c ) { return object.bool_type_error("in char<=?, expected a character\n"); }
   public boolean char_gte( char c ) { return object.bool_type_error("in char>=?, expected a character\n"); }
   public int char_value_as_int() { return object.int_type_error("in char->integer, expected a character\n"); }
-
   // string //////////////////////////////////////////////////////////
   public boolean is_string() { return false; }
   public char[] string_value() { return object.chararr_type_error("expected a string\n"); }
   public int string_length() { return object.int_type_error("in string-length, expected a string\n"); }
   public char string_ref(int i) { return object.char_type_error("in string-ref, expected a string\n"); }
   public object string_set(int i, char c) { return object.obj_type_error("in string-set, expected a string\n"); }
-
   // symbol //////////////////////////////////////////////////////////
   public boolean is_symbol() { return false; }
   public char[] symbol_value() { return object.chararr_type_error("expected a symbol\n"); }
-
   // vector //////////////////////////////////////////////////////////
   public boolean is_vector() { return false; }
   public object[] vector_value() { return object.objarr_type_error("expected a vector\n"); }
   public int vector_length() { return object.int_type_error("in vector-length, expected a vector\n"); }
   public object vector_ref(int i) { return object.obj_type_error("in vector-ref, expected a vector\n"); }
   public object vector_set(int i, object o) { return object.obj_type_error("in vector-set!, expected a vector\n"); }
-
   // end-of-file /////////////////////////////////////////////////////
   public boolean is_eof() { return false; }
-
   // nil /////////////////////////////////////////////////////////////
   public boolean is_nil() { return false; }
-
   // pair ////////////////////////////////////////////////////////////
   public boolean is_pair() { return false; }
   public object pair_car() { return object.obj_type_error("in car, expected a pair\n"); }
   public object pair_cdr() { return object.obj_type_error("in cdr, expected a pair\n"); }
   public object pair_set_car( object a ) { return object.obj_type_error("in set-car!, expected a pair\n"); }
   public object pair_set_cdr( object a ) { return object.obj_type_error("in set-cdr!, expected a pair\n"); }
-
   // input-port //////////////////////////////////////////////////////
   public boolean is_input_port() { return false; }
   public object read_char() { return object.obj_type_error("in read-char, expected an input-port\n"); }
   public object peek_char() { return object.obj_type_error("in peek-char, expected an input-port\n"); }
   public boolean char_ready() { return object.bool_type_error("in char-ready?, expected an input-port\n"); }
   public object close_input_port() { return object.obj_type_error("in close-input-port, expected an input-port\n"); }
-
   // output-port /////////////////////////////////////////////////////
   public boolean is_output_port() { return false; }
   public object write_char( char c ) { return object.obj_type_error("in write-char, expected an output-port\n"); }
   public object close_output_port() { return object.obj_type_error("in close-output-port, expected an output-port\n"); }
 }
-
 class scheme_proc extends object
 {
   public boolean is_proc() { return true; }
 }
-
 class scheme_bool extends object
 {
   boolean bvalue;
-
   public scheme_bool() {
     bvalue = false;
   }
-
   public scheme_bool(boolean b) {
     bvalue = b;
   }
-
   public boolean is_bool() { return true; }
   public object bool_const( boolean b ) { bvalue = b; return this; }
   public boolean bool_value() { return bvalue; }
@@ -698,49 +694,38 @@ class scheme_bool extends object
     return value;
   }
 }
-
 class scheme_int extends object
 {
   int ivalue;
-
   public scheme_int() {
     ivalue = 0;
   }
-
   public scheme_int( int i ) {
     ivalue = i;
   }
-
   public boolean is_int() { return true; }
   public object int_const( int i ) { ivalue = i; return this; }
   public int int_value() { return ivalue; }
 }
-
 class scheme_char extends object
 {
   char cvalue;
-
   public scheme_char() {
     cvalue = '\0';
   }
-
   public scheme_char( char c ) {
     cvalue = c;
   }
-
   public scheme_char( int i ) {
     cvalue = scheme_io_interface.make_char(i);
   }
-
   public object char_const(char c) { cvalue = c; return this; }
-
   public boolean is_char() { return true; }
   public char char_value() { return cvalue; }
   public boolean char_eq( char c ) { return cvalue == c; }
   public boolean char_lt( char c ) { return cvalue < c; }
   public boolean char_gt( char c ) {
     boolean value;
-
     if (cvalue < c) {
       value = false;
     } else {
@@ -754,7 +739,6 @@ class scheme_char extends object
   }
   public boolean char_lte( char c ) {
     boolean value;
-
     if (cvalue < c) {
       value = true;
     } else {
@@ -769,22 +753,17 @@ class scheme_char extends object
   public boolean char_gte( char c ) { return !(cvalue < c); }
   public int char_value_as_int() { return 0 + cvalue; }
 }
-
 class scheme_string extends object
 {
   char[] svalue;
-
   public scheme_string() {
     svalue = new char[0];
   }
-
   public scheme_string( char[] s ) {
     svalue = s;
   }
-
   public scheme_string( int k, char c ) {
     int i;
-
     svalue = new char[k];
     i = 0;
     while (i < k) {
@@ -792,7 +771,6 @@ class scheme_string extends object
       i = i + 1;
     }
   }
-
   public boolean is_string() { return true; }
   public char[] string_value() {
     return svalue;
@@ -804,42 +782,33 @@ class scheme_string extends object
     return svalue[i];
   }
 }
-
 class scheme_symbol extends object
 {
   char[] svalue;
-
   public scheme_symbol() {
     svalue = new char[0];
   }
-
   public scheme_symbol( char[] s ) {
     svalue = s;
   }
-
   public boolean is_symbol() { return true; }
   public char[] symbol_value() { return svalue; }
 }
-
 class scheme_eof extends object
 {
   public boolean is_eof() { return true; }
 }
-
 class scheme_nil extends object
 {
   public boolean eq(object o) { return o.is_nil(); }
   public boolean is_nil() { return true; }
 }
-
 class scheme_vector extends object
 {
   object[] value;
-
   public scheme_vector( int n ) {
     value = new object[n];
   }
-
   public scheme_vector( int n, object o ) {
     int i;
     value = new object[n];
@@ -849,33 +818,26 @@ class scheme_vector extends object
       i = i + 1;
     }
   }
-
   public boolean is_vector() { return true; }
   public object[] vector_value() { return value; }
   public int vector_length() { return value.length; }
   public object vector_ref(int i) { return value[i]; }
   public object vector_set(int i, object o) { value[i] = o; return o; }
 }
-
 class scheme_pair extends object
 {
   object car;
   object cdr;
-
   public scheme_pair( object a, object d ) {
     car = a;
     cdr = d;
   } /* scheme_pair */
-
   public boolean is_pair() { return true; }
-
   public object pair_car() { return car; }
   public object pair_cdr() { return cdr; }
-
   public object pair_set_car( object a ) { car = a; return a; }
   public object pair_set_cdr( object a ) { cdr = a; return a; }
 }
-
 class scheme_io_interface
 {
   __sasm_impl public static int open_file( char[] fname, int len, int read )
@@ -890,40 +852,32 @@ class scheme_io_interface
     = sasm_scheme_make_char;
   __sasm_impl public static object print_char( char c )
     = sasm_scheme_print_char;
-
 }
-
 class scheme_input_port extends object
 {
   int f;
   scheme_eof eof;
   boolean peeked;
   object peeked_char;
-
   public scheme_input_port() {
     char[] fname;
-
     fname = new char[0];
     f = scheme_io_interface.open_file(fname, 0, 1);
     eof = new scheme_eof();
     peeked = false;
     peeked_char = eof;
   }
-
   public scheme_input_port( char[] fname ) {
     f = scheme_io_interface.open_file(fname, fname.length, 1);
     eof = new scheme_eof();
     peeked = false;
     peeked_char = eof;
   } /* scheme_input_port */
-
   public boolean is_input_port() {
     return true;
   } /* is_input_port */
-
   public object peek_char() {
     object result;
-
     if (peeked) {
       result = peeked_char;
     } else {
@@ -933,15 +887,12 @@ class scheme_input_port extends object
     }
     return result;
   } /* peek_char */
-
   public boolean char_ready() {
     return true;
   } /* char_ready */
-
   public object read_char() {
     object result;
     int c;
-
     if (f == 0) {
       result = eof;
     } else {
@@ -959,10 +910,8 @@ class scheme_input_port extends object
     }
     return result;
   } /* read_char */
-
   public object close_input_port() {
     int c;
-
     if (f == 0) {
       /* nothing */
     } else {
@@ -972,27 +921,20 @@ class scheme_input_port extends object
     return eof;
   } /* close_input_port */
 } /* class scheme_input_port */
-
 class scheme_output_port extends object
 {
   int f;
-
   public scheme_output_port() {
     char[] fname;
-
     fname = new char[0];
     f = scheme_io_interface.open_file(fname, 0, 0);
   } /* scheme_output_port */
-
   public scheme_output_port( char[] fname ) {
     f = scheme_io_interface.open_file(fname, fname.length, 0);
   } /* scheme_output_port */
-
   public boolean is_output_port() { return true; }
-
   public object write_char( char c ) {
     int dontcare;
-
     if (f == 0) {
       /* nothing */
     } else {
@@ -1000,10 +942,8 @@ class scheme_output_port extends object
     } /* if */
     return this;
   } /* write_char */
-
   public object close_output_port() {
     int dontcare;
-
     if (f == 0) {
       /* nothing */
     } else {
@@ -1013,3 +953,14 @@ class scheme_output_port extends object
     return this;
   } /* close_output_port */
 } /* class scheme_output_port */
+class scheme_counter extends object
+{
+    int value;
+    public scheme_counter() {
+        value = 0;
+    }
+    public int inc() {
+        value = value + 1;
+        return value;
+    }
+}

@@ -217,6 +217,8 @@ DEPEND_SCHEMEC_SIMPLE_TEST=\
   out/bootstrap/test/read10.diff \
   out/bootstrap/test/read11.out \
   out/bootstrap/test/read11.diff \
+  out/bootstrap/test/interop1.out \
+  out/bootstrap/test/interop1.diff \
   \
   out/bootstrap/test/badapply.out \
   out/bootstrap/test/badapply.diff \

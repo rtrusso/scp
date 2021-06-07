@@ -841,6 +841,10 @@
 (define (class-preamble class env context)
   (emit-code context
              `(export ,(class-get-name-label class)))
+  (for-each (lambda (ctor)
+              (emit-code context
+                         `(export ,(class-get-constructor-label class ctor))))
+            (@ast class :constructors))
   (for-each (lambda (method-entry)
               (emit-code context
                          `(export ,(cdr method-entry))))
