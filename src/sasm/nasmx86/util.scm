@@ -59,5 +59,5 @@
 
 (define (x86-divisor-other-register? x)
   (and (register? x)
-       (not (x86-divide-quotient-low? x))
-       (not (x86-divide-quotient-high? x))))
+       (not (x86-dividend-low? x))
+       (not (x86-dividend-high? x))))
