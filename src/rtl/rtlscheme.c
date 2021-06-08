@@ -4,6 +4,9 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#ifdef linux
+#include <unistd.h>
+#endif
 #include <sasm.h>
 
 int SYM(c_scheme_argc) = 0;

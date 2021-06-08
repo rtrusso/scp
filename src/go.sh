@@ -26,7 +26,7 @@ echo ==========================================================================
 echo == Scheme and SASM Tool Bootstrap
 echo ==========================================================================
 
-make -f bootstrap.linux.makefile out/bootstrap/test/java/tests.done out/bootstrap/test/java/gc/tests.done out/bootstrap/test/schemec-tests.done
+make -f bootstrap.linux.makefile
 if [ $? -ne 0 ]; then exit $?; fi
 if [ ! -f out/bootstrap/sasm.exe ]; then exit 1; fi
 if [ ! -f out/bootstrap/sasm-opt.exe ]; then exit 1; fi
