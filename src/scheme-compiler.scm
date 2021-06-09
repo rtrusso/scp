@@ -335,7 +335,7 @@
            (output-port (open-output-file output-file-name-tmp))
            (syntax-output-port (open-output-file syntax-output-file-name-tmp)))
       (if (not input-port)
-          (error "Unable to open input file" input-file-name))
+          (error "Unable to open input file" file-name))
       (if (not output-port)
           (error "Unable to open output file" output-file-name-tmp))
       (if (not syntax-output-port)

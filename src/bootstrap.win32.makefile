@@ -458,7 +458,7 @@ out/bootstrap/test/java/gc/.exists : out/bootstrap/test/java/.exists
 	cmd.exe /c "if not exist out\bootstrap\test\java\gc mkdir out\bootstrap\test\java\gc"
 	cmd.exe /c "echo exists>out\bootstrap\test\java\gc\.exists"
 
-out/scheme-compiler-flat-ts.scm : $(OUT_DIR) needc-ts.scm $(deps_of_scheme_compiler)
+out/scheme-compiler-flat-ts.scm : $(OUT_DIR) needc-ts.scm $(deps_of_scheme_compiler) scheme-compiler-ts.scm scheme-compiler.scm
 	$(SCHEME) needc-ts.scm --output out/scheme-compiler-flat-ts.scm scheme-compiler-ts
 
 out/scheme-gluec-flat-ts.scm : $(OUT_DIR) needc-ts.scm scheme-gluec.scm scheme-gluec-ts.scm
