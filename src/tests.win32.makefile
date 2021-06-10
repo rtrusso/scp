@@ -65,33 +65,33 @@ out/$(TEST_OUTDIR_NAME)/test/getenv.out: out/$(TEST_OUTDIR_NAME)/test/getenv.exe
 
 out/$(TEST_OUTDIR_NAME)/test/delete.out: out/$(TEST_OUTDIR_NAME)/test/delete.exe
 	cmd.exe /c "echo foo>deleteme.file"
-	$< >$@.tmp
+	$(subst /,\,$<) >$(subst /,\,$@.tmp)
 	cmd.exe /c "if exist deleteme.file exit /b 1"
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/$(TEST_OUTDIR_NAME)/test/rename.out: out/$(TEST_OUTDIR_NAME)/test/rename.exe
 	cmd.exe /c "echo foo>from.file"
-	$< >$@.tmp
+	$(subst /,\,$<) >$(subst /,\,$@.tmp)
 	cmd.exe /c "if exist from.file exit /b 1"
 	cmd.exe /c "if not exist to.file exit /b 1"
 	cmd.exe /c "del to.file"
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/$(TEST_OUTDIR_NAME)/test/argv.out: out/$(TEST_OUTDIR_NAME)/test/argv.exe
-	$< 1 2 3 4 five six 7 8 9 ten>$@.tmp
+	$(subst /,\,$<) 1 2 3 4 five six 7 8 9 ten>$(subst /,\,$@.tmp)
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/$(TEST_OUTDIR_NAME)/test/outputfile.out: out/$(TEST_OUTDIR_NAME)/test/outputfile.exe
-	$< out/$(TEST_OUTDIR_NAME)/test/outputfile.dat>$@.tmp
+	$(subst /,\,$<) $(subst /,\,out/$(TEST_OUTDIR_NAME)/test/outputfile.dat)>$(subst /,\,$@.tmp)
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/$(TEST_OUTDIR_NAME)/test/outputfile.diff: out/$(TEST_OUTDIR_NAME)/test/outputfile.out tests\baseline\outputfile-s.actual
-	diff --strip-trailing-cr out/$(TEST_OUTDIR_NAME)/test/outputfile.out tests\baseline\outputfile-s.actual
-	diff --strip-trailing-cr out/$(TEST_OUTDIR_NAME)/test/outputfile.dat tests\baseline\outputfile.dat
+	fc.exe $(subst /,\,out/$(TEST_OUTDIR_NAME)/test/outputfile.out) $(subst /,\,tests\baseline\outputfile-s.actual)
+	fc.exe $(subst /,\,out/$(TEST_OUTDIR_NAME)/test/outputfile.dat) $(subst /,\,tests\baseline\outputfile.dat)
 	cmd.exe /c "echo same>out\$(TEST_OUTDIR_NAME)\test\outputfile.diff"
 
 out/$(TEST_OUTDIR_NAME)/test/r5rs3.out: out/$(TEST_OUTDIR_NAME)/test/r5rs3.exe
-	$< out/$(TEST_OUTDIR_NAME)/test/r5rs3-cwof.dat>$@.tmp
+	$(subst /,\,$<) $(subst /,\,out/$(TEST_OUTDIR_NAME)/test/r5rs3-cwof.dat)>$(subst /,\,$@.tmp)
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/$(TEST_OUTDIR_NAME)/test/badapply.out: out/$(TEST_OUTDIR_NAME)/test/badapply.exe tests/badapply.cmd
@@ -195,11 +195,11 @@ out/$(TEST_OUTDIR_NAME)/test/%.exe: out/$(TEST_OUTDIR_NAME)/test/%.obj $(DEPEND_
 	gcc $(TEST_SCHEME_CFLAGS) -Irtl $(DEPEND_TEST_RTL_C) $(DEPEND_TEST_RTL_OBJS) $(DEPEND_TEST_SCHEME_RTL) $< -o $@
 
 out/$(TEST_OUTDIR_NAME)/test/%.out: out/$(TEST_OUTDIR_NAME)/test/%.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/$(TEST_OUTDIR_NAME)/test/%.diff: out/$(TEST_OUTDIR_NAME)/test/%.out tests/baseline/%-s.actual
-	diff --strip-trailing-cr $< $(patsubst out/$(TEST_OUTDIR_NAME)/test/%.out,tests/baseline/%-s.actual,$<)
+	fc.exe $(subst /,\,$<) $(subst /,\,$(patsubst out/$(TEST_OUTDIR_NAME)/test/%.out,tests/baseline/%-s.actual,$<))
 	cmd.exe /c "echo same>$(subst /,\,$@)"
 
 

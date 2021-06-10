@@ -779,16 +779,16 @@ out/selfbld/test/sasmtest-%.asm: out/bootstrap/%.sasm-opt $(BOOTSTRAP_SASMC)
 	$(BOOTSTRAP_SASMC) $< --out=$@
 
 out/selfbld/test/sasmtest-%.asmdiff: out/selfbld/test/sasmtest-%.asm out/bootstrap/%.asm
-	diff --strip-trailing-cr $< $(patsubst out/selfbld/test/sasmtest-%.asm,out/bootstrap/%.asm,$<)
+	fc.exe  $(subst /,\,$<) $(subst /,\,$(patsubst out/selfbld/test/sasmtest-%.asm,out/bootstrap/%.asm,$<))
 	cmd.exe /c "echo same>$(subst /,\,$@)"
 
 # --ignore-case here is suspicious, I'm not clear why the symbols are all coming out lower-case in bootstrap
 out/selfbld/test/sasmopttest-%.sasm-optdiff: out/selfbld/test/sasmopttest-%.sasm-opt out/bootstrap/%.sasm-opt
-	diff --ignore-case --strip-trailing-cr $< $(patsubst out/selfbld/test/sasmopttest-%.sasm-opt,out/bootstrap/%.sasm-opt,$<)
+	fc.exe /c $(subst /,\,$<) $(subst /,\,$(patsubst out/selfbld/test/sasmopttest-%.sasm-opt,out/bootstrap/%.sasm-opt,$<))
 	cmd.exe /c "echo same>$(subst /,\,$@)"
 
 out/selfbld/test/schemectest-tests-%.sasmdiff: out/selfbld/test/schemectest-tests-%.sasm out/bootstrap/test/%.sasm
-	diff --ignore-case --strip-trailing-cr $< $(patsubst out/selfbld/test/schemectest-tests-%.sasm,out/bootstrap/test/%.sasm,$<)
+	fc.exe /c $(subst /,\,$<) $(subst /,\,$(patsubst out/selfbld/test/schemectest-tests-%.sasm,out/bootstrap/test/%.sasm,$<))
 	cmd.exe /c "echo same>$(subst /,\,$@)"
 
 out/selfbld/test/schemectest-tests-%.sasm : tests/%.scm $(BOOTSTRAP_SCHEMEC)
@@ -843,7 +843,9 @@ DEPEND_SCHEME_RTL_OMIT_MAIN=\
   out/selfbld/r5rs-library.obj \
   out/selfbld/r5rs-native.obj \
   out/selfbld/r5rs-wrap.obj \
-  out/selfbld/rtlscheme.obj
+  out/selfbld/rtlscheme.obj \
+  out/selfbld/scheme-java.obj \
+  out/selfbld/scheme.obj
 
 DEPEND_RTL=\
   $(DEPEND_RTL_C) \
@@ -874,6 +876,7 @@ out/selfbld/r5rs-native.sasm: out/bootstrap/r5rs-native.sasm
 out/selfbld/r5rs-native.sasm-opt: out/selfbld/r5rs-native.sasm $(BOOTSTRAP_SASM_OPT)
 	$(BOOTSTRAP_SASM_OPT) $< --out=$@
 
+# rtl rules
 out/selfbld/debug.asm: rtl/debug.asm
 	cmd.exe /c "copy rtl\debug.asm out\selfbld\debug.asm"
 
@@ -882,6 +885,13 @@ out/selfbld/%.asm: out/selfbld/%.sasm-opt $(BOOTSTRAP_SASMC)
 
 out/selfbld/%.obj: out/selfbld/%.asm
 	nasm -fwin32 $< -o $@
+
+out/selfbld/scheme.sasm : out/bootstrap/scheme.sasm
+	cmd.exe /c "copy out\bootstrap\scheme.sasm out\selfbld\scheme.sasm"
+#	$(BOOTSTRAP_JAVAC) -l --out=$@ rtl/scheme.java
+
+out/selfbld/scheme.sasm-opt: out/selfbld/scheme.sasm $(BOOTSTRAP_SASM_OPT)
+	$(BOOTSTRAP_SASM_OPT) $< --out=$@
 
 # RTL rules which have to go under specific rules above
 out/selfbld/%.sasm-opt: rtl/%.sasm $(BOOTSTRAP_SASM_OPT)
