@@ -110,8 +110,15 @@ POSITIVE_SCHEME_TESTS=\
   out/$(TEST_OUTDIR_NAME)/test/read10.out \
   out/$(TEST_OUTDIR_NAME)/test/read10.diff \
   out/$(TEST_OUTDIR_NAME)/test/read11.out \
-  out/$(TEST_OUTDIR_NAME)/test/read11.diff
-
+  out/$(TEST_OUTDIR_NAME)/test/read11.diff \
+  out/$(TEST_OUTDIR_NAME)/test/n2s.out \
+  out/$(TEST_OUTDIR_NAME)/test/n2s.diff \
+  out/$(TEST_OUTDIR_NAME)/test/n2s2.out \
+  out/$(TEST_OUTDIR_NAME)/test/n2s2.diff \
+  out/$(TEST_OUTDIR_NAME)/test/quot2.out \
+  out/$(TEST_OUTDIR_NAME)/test/quot2.diff \
+  out/$(TEST_OUTDIR_NAME)/test/interop1.out \
+  out/$(TEST_OUTDIR_NAME)/test/interop1.diff
 
 NEGATIVE_SCHEME_TESTS=\
   out/$(TEST_OUTDIR_NAME)/test/badapply.out \
