@@ -8,7 +8,7 @@
                 (rewrite-rule ("cmp ~, 0" (reg register))))
 
    (instruction (input-pattern `(assign (,register? dest) (op less-than) (,register? op-a) (const (,intconst? op-b))))
-                (rewrite-rule ("cmp ~, ~" (op-a register) (op-b intconst))
+                (rewrite-rule ("cmp ~, 0x~" (op-a register) (op-b x86-32-bit-intconst))
                               ("setl ~" (dest nasm-x86-register-lsb-alias))
                               ("and ~, 1" (dest register))))
 
@@ -18,7 +18,7 @@
                               ("and ~, 1" (dest register))))
 
    (instruction (input-pattern `(assign (,register? dest) (op equal-to) (,register? op-a) (const (,intconst? op-b))))
-                (rewrite-rule ("cmp ~, ~" (op-a register) (op-b intconst))
+                (rewrite-rule ("cmp ~, 0x~" (op-a register) (op-b x86-32-bit-intconst))
                               ("sete ~" (dest nasm-x86-register-lsb-alias))
                               ("and ~, 1" (dest register))))
 
@@ -33,7 +33,7 @@
                               ("and ~, 1" (dest register))))
 
    (instruction (input-pattern `(assign (,register? dest) (op less-than-or-equal) (,register? op-a) (const (,intconst? op-b))))
-                (rewrite-rule ("cmp ~, ~" (op-a register) (op-b intconst))
+                (rewrite-rule ("cmp ~, 0x~" (op-a register) (op-b x86-32-bit-intconst))
                               ("setle ~" (dest nasm-x86-register-lsb-alias))
                               ("and ~, 1" (dest register))))
 

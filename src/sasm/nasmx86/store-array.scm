@@ -5,11 +5,11 @@
    ;; store-array ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
    (instruction (input-pattern `(perform (op store-array) (const (,label? array)) (const (,intconst? offset)) (const (,intconst? value))))
-                (rewrite-rule "mov dword [~~~], ~"
+                (rewrite-rule "mov dword [~~~], 0x~"
                               (array label)
                               (offset nasm-x86-offset+/-)
                               (offset nasm-x86-offset)
-                              (value intconst)))
+                              (value x86-32-bit-intconst)))
 
    (instruction (input-pattern `(perform (op store-array) (const (,label? array)) (const (,intconst? offset)) (,register? value)))
                 (rewrite-rule "mov dword [~~~], ~"
@@ -33,18 +33,18 @@
                               (value register)))
 
    (instruction (input-pattern `(perform (op store-array) (,register? array) (const (,intconst? offset)) (const (,intconst? value))))
-                (rewrite-rule "mov dword [~~~], ~"
+                (rewrite-rule "mov dword [~~~], 0x~"
                               (array register)
                               (offset nasm-x86-offset+/-)
                               (offset nasm-x86-offset)
-                              (value intconst)))
+                              (value x86-32-bit-intconst)))
 
    (instruction (input-pattern `(perform (op store-array) (,register? pointer) (,register? offset) (const (,intconst? value))))
-                (rewrite-rule "mov dword [~~~], ~"
+                (rewrite-rule "mov dword [~~~], 0x~"
                               (pointer register)
                               (offset nasm-x86-offset+/-)
                               (offset nasm-x86-offset)
-                              (value intconst)))
+                              (value x86-32-bit-intconst)))
 
    (instruction (input-pattern `(perform (op store-array) (,register? pointer) (const (,intconst? offset)) (label (,label? value))))
                 (rewrite-rule "mov dword [~~~], ~"

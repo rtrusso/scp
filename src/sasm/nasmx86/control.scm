@@ -35,14 +35,14 @@
                                                 (result (op greater-than)
                                                         (,register? reg)
                                                         (const (,intconst? op-b)))))
-                (rewrite-rule ("cmp ~, ~" (reg register) (op-b intconst))
+                (rewrite-rule ("cmp ~, 0x~" (reg register) (op-b x86-32-bit-intconst))
                               ("jg NEAR ~" (label label))))
 
    (instruction (input-pattern `(branch-nonzero (label (,label? label))
                                                 (result (op equal-to)
                                                         (,register? reg)
                                                         (const (,intconst? op-b)))))
-                (rewrite-rule ("cmp ~, ~" (reg register) (op-b intconst))
+                (rewrite-rule ("cmp ~, 0x~" (reg register) (op-b x86-32-bit-intconst))
                               ("je NEAR ~" (label label))))
 
    (instruction (input-pattern `(branch-nonzero (label (,label? label))
@@ -56,7 +56,7 @@
                                                 (result (op less-than-or-equal)
                                                         (,register? reg)
                                                         (const (,intconst? op-b)))))
-                (rewrite-rule ("cmp ~, ~" (reg register) (op-b intconst))
+                (rewrite-rule ("cmp ~, 0x~" (reg register) (op-b x86-32-bit-intconst))
                               ("jle NEAR ~" (label label))))
 
    ))
