@@ -894,7 +894,8 @@ out/selfbld/scheme.sasm-opt: out/selfbld/scheme.sasm $(BOOTSTRAP_SASM_OPT)
 out/selfbld/%.sasm-opt: rtl/%.sasm $(BOOTSTRAP_SASM_OPT)
 	$(BOOTSTRAP_SASM_OPT) $< --out=$@
 
-SCHEME_CFLAGS=-DSCHEME_RTL=1
+CFLAGS=-g -fno-pie -no-pie -m32
+SCHEME_CFLAGS=-DSCHEME_RTL=1 $(CFLAGS)
 
 out/selfbld/sasm.exe: $(DEPEND_RTL) out/sasm-selfbld.out
 	gcc $(SCHEME_CFLAGS) -Irtl -Lout/selfbld $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL_OMIT_MAIN) out/selfbld/sasm.o -o $@ -lsasm
