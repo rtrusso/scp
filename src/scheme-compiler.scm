@@ -62,8 +62,11 @@
     (if (and *emit-entry*
              (top-level-compiler-context?))
         (begin
+          ;; (extern $java-library-entry)
           ;; (extern $scheme-entry:rtl/r5rs-wrap)
           ;; (extern $scheme-entry:rtl/r5rs-library)
+          (scheme-codegen-emit! (insn-seq '() '()
+                                          `((extern $java-library-entry))))
           (scheme-codegen-emit! (insn-seq '() '()
                                           `((extern $scheme-entry:rtl/r5rs-wrap))))
           (scheme-codegen-emit! (insn-seq '() '()
@@ -100,7 +103,8 @@
           (insn-seq '()
                     `(accum operand index
                             ,(cadr (env-register)) ,(cadr (link-register)))
-                    `((perform (op call) (const $scheme-entry:rtl/r5rs-wrap))
+                    `((perform (op call) (const $java-library-entry))
+                      (perform (op call) (const $scheme-entry:rtl/r5rs-wrap))
                       (perform (op call) (const $scheme-entry:rtl/r5rs-library))))
           (empty-insn-seq))
       (codegen-entry-chain *top-level-dependencies*)
@@ -158,11 +162,11 @@
 ;; main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *main-file* #f)
-(define *output* #f)
+(define *output* #f) ; the actual output port
 (define *output-stack* '())
 (define *input* #f)
 (define *input-file* #f)
-(define *output-file* #f)
+(define *output-file* #f) ; the output file name
 (define *conspiracy-mode* #f)
 (define *output-directory* #f)
 (define *visited-files* '())
@@ -274,6 +278,8 @@
 
         ;; syntax file up-to-date
         (let ((syntax-input-port (open-input-file syntax-input-file-name)))
+          (if (not syntax-input-port)
+              (error "Unable to open syntax input file" syntax-input-file-name))
           (display (string-append ";; loading syntax "
                                   syntax-input-file-name))
           (newline)
@@ -289,6 +295,10 @@
           (delete-if-exists! syntax-output-file-name-tmp)
           (let ((input-port (open-input-file input-file-name))
                 (syntax-output-port (open-output-file syntax-output-file-name-tmp)))
+            (if (not input-port)
+                (error "Unable to open input file" input-file-name))
+            (if (not syntax-output-port)
+                (error "Unable to open syntax output file" syntax-output-file-name-tmp))
             (display (string-append ";; compiling syntax "
                                     (symbol->string (get-file-name-need-symbol file-name))
                                     ))
@@ -324,6 +334,12 @@
     (let* ((input-port (open-input-file file-name))
            (output-port (open-output-file output-file-name-tmp))
            (syntax-output-port (open-output-file syntax-output-file-name-tmp)))
+      (if (not input-port)
+          (error "Unable to open input file" file-name))
+      (if (not output-port)
+          (error "Unable to open output file" output-file-name-tmp))
+      (if (not syntax-output-port)
+          (error "Unable to open syntax output file" syntax-output-file-name-tmp))
       (push-output-stack! output-port)
       (push-compiler-context!)
       (begin-accumulating-define-syntax-expressions!)
@@ -389,6 +405,8 @@
               (else (if *input*
                         (error "more than one input file specified" arg))
                     (set! *input* (open-input-file arg))
+                    (if (not *input*)
+                        (error "Unable to open input file" arg))
                     (set! *input-file* arg)
                     (set! *main-file* arg)
                     (loop rest))))))
@@ -424,7 +442,10 @@
                *output-file*)
           (begin
             (delete-if-exists! output-file-name-tmp)
-            (set! *output* (open-output-file output-file-name-tmp))))
+            (set! *output* (open-output-file output-file-name-tmp))
+            (if (not *output*)
+                (error "Unable to open output file " output-file-name-tmp))
+            ))
 
       (if *output-file*
           (let ((fs-input (read-fs *input-file*))

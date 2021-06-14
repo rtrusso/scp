@@ -59,6 +59,13 @@ class scheme_test
       System.out.println("PASS: " + i + " -> [" + new String(actual) + "]");
     }
   }
+  public static void assertEqual(int expected, int actual) {
+      if (expected == actual) {
+          System.out.println("PASS: [" + expected + "] == [" + actual + "]");
+      } else {
+          System.out.println("FAIL: [" + expected + "] != [" + actual + "]");
+      }
+  }
   public static void main(String[] args) {
     check("300", 10, 300);
     check(300, 10, "300");
@@ -75,6 +82,11 @@ class scheme_test
     check("-0000000", 2, 0);
     check(120, 10, "120");
     check("120", 10, 120);
+
+    scheme_counter c = new scheme_counter();
+    assertEqual(1, c.inc());
+    assertEqual(2, c.inc());
+    assertEqual(3, c.inc());
   }  /* main */
 }
 #endif /* !TESTING */
@@ -1098,3 +1110,17 @@ class scheme_output_port extends object
     return this;
   } /* close_output_port */
 } /* class scheme_output_port */
+
+class scheme_counter extends object
+{
+    int value;
+
+    public scheme_counter() {
+        value = 0;
+    }
+
+    public int inc() {
+        value = value + 1;
+        return value;
+    }
+}

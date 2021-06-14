@@ -72,8 +72,9 @@ deps_of_sasm_opt=\
   sasm/nasmx86/debug.scm \
   sasm/nasmx86/base.scm \
   sasm/nasmx86/machine.scm \
+  sasm/sasm-codegen.scm \
   util/output-file.scm \
   sasm/sasm-nasmx86.scm \
   sasm/sasm-opt.scm \
-  # 74 dependencies listed
+  # 75 dependencies listed
 

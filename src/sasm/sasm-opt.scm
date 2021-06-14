@@ -5,6 +5,7 @@
 (need sasm/sasm-dataflow)
 (need sasm/sasm-regalloc)
 (need sasm/sasm-tracing)
+(need sasm/sasm-codegen)
 (need util/string)
 (need util/output-file)
 
@@ -21,7 +22,7 @@
 
 (define (sasm-display-statement sasm-stmt)
   (define (sasm-opt-write x)
-    (write x (sasm-optimizer-output-port)))
+    (sasm-pretty-print x (sasm-optimizer-output-port)))
   (define (sasm-opt-display x)
     (display x (sasm-optimizer-output-port)))
   (define (sasm-opt-newline)

@@ -44,3 +44,20 @@
   (or (equal? x '(reg accum))
       (equal? x '(reg eax))))
 
+(define (x86-dividend-low? x)
+  (x86-accumulator? x))
+
+(define (x86-quotient? x)
+  (x86-accumulator? x))
+
+(define (x86-dividend-high? x)
+  (or (equal? x '(reg index))
+      (equal? x '(reg edx))))
+
+(define (x86-remainder? x)
+  (x86-dividend-high? x))
+
+(define (x86-divisor-other-register? x)
+  (and (register? x)
+       (not (x86-dividend-low? x))
+       (not (x86-dividend-high? x))))

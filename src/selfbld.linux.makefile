@@ -764,7 +764,7 @@ out/selfbld/test/util-string.asm: out/selfbld/test/util-string.sasm-opt $(BOOTST
 	$(BOOTSTRAP_SASMC) $< --out=$@
 
 out/selfbld/test/util-string.o: out/selfbld/test/util-string.asm
-	nasm -fwin32 $< -o $@
+	nasm -felf32 $< -o $@
 
 out/selfbld/test/gc-invoke.sasm-opt: rtl/gc-invoke.sasm $(SELFBLD_TEST_DIR) $(BOOTSTRAP_SASM_OPT)
 	$(BOOTSTRAP_SASM_OPT) $< --out=$@
@@ -795,7 +795,7 @@ out/selfbld/test/schemectest-tests-%.sasm : tests/%.scm $(BOOTSTRAP_SCHEMEC)
 	$(BOOTSTRAP_SCHEMEC) $< --output $@
 
 out/selfbld/test/%.o: out/selfbld/test/%.asm
-	nasm -fwin32 $< -o $@
+	nasm -felf32 $< -o $@
 
 DEPEND_TOOLSET=\
   $(BOOTSTRAP_SCHEMEC) \
@@ -840,7 +840,9 @@ DEPEND_SCHEME_RTL_OMIT_MAIN=\
   out/selfbld/r5rs-library.o \
   out/selfbld/r5rs-native.o \
   out/selfbld/r5rs-wrap.o \
-  out/selfbld/rtlscheme.o
+  out/selfbld/rtlscheme.o \
+  out/selfbld/scheme-java.o \
+  out/selfbld/scheme.o
 
 DEPEND_RTL=\
   $(DEPEND_RTL_C) \
@@ -871,6 +873,7 @@ out/selfbld/r5rs-native.sasm: out/bootstrap/r5rs-native.sasm
 out/selfbld/r5rs-native.sasm-opt: out/selfbld/r5rs-native.sasm $(BOOTSTRAP_SASM_OPT)
 	$(BOOTSTRAP_SASM_OPT) $< --out=$@
 
+# rtl rules
 out/selfbld/debug.asm: rtl/debug.asm
 	cp rtl/debug.asm out/selfbld/debug.asm
 
@@ -878,13 +881,21 @@ out/selfbld/%.asm: out/selfbld/%.sasm-opt $(BOOTSTRAP_SASMC)
 	$(BOOTSTRAP_SASMC) $< --out=$@
 
 out/selfbld/%.o: out/selfbld/%.asm
-	nasm -fwin32 $< -o $@
+	nasm -felf32 $< -o $@
+
+out/selfbld/scheme.sasm : out/bootstrap/scheme.sasm
+	cp out/bootstrap/scheme.sasm out/selfbld/scheme.sasm
+#	$(BOOTSTRAP_JAVAC) -l --out=$@ rtl/scheme.java
+
+out/selfbld/scheme.sasm-opt: out/selfbld/scheme.sasm $(BOOTSTRAP_SASM_OPT)
+	$(BOOTSTRAP_SASM_OPT) $< --out=$@
 
 # RTL rules which have to go under specific rules above
 out/selfbld/%.sasm-opt: rtl/%.sasm $(BOOTSTRAP_SASM_OPT)
 	$(BOOTSTRAP_SASM_OPT) $< --out=$@
 
-SCHEME_CFLAGS=-DSCHEME_RTL=1
+CFLAGS=-g -fno-pie -no-pie -m32
+SCHEME_CFLAGS=-DSCHEME_RTL=1 $(CFLAGS)
 
 out/selfbld/sasm.exe: $(DEPEND_RTL) out/sasm-selfbld.out
 	gcc $(SCHEME_CFLAGS) -Irtl -Lout/selfbld $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL_OMIT_MAIN) out/selfbld/sasm.o -o $@ -lsasm

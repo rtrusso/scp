@@ -217,6 +217,14 @@ DEPEND_SCHEMEC_SIMPLE_TEST=\
   out/bootstrap/test/read10.diff \
   out/bootstrap/test/read11.out \
   out/bootstrap/test/read11.diff \
+  out/bootstrap/test/n2s.out \
+  out/bootstrap/test/n2s.diff \
+  out/bootstrap/test/n2s2.out \
+  out/bootstrap/test/n2s2.diff \
+  out/bootstrap/test/quot2.out \
+  out/bootstrap/test/quot2.diff \
+  out/bootstrap/test/interop1.out \
+  out/bootstrap/test/interop1.diff \
   \
   out/bootstrap/test/badapply.out \
   out/bootstrap/test/badapply.diff \
@@ -292,7 +300,9 @@ DEPEND_SCHEME_RTL_OMIT_MAIN=\
   out/bootstrap/r5rs-library.obj \
   out/bootstrap/r5rs-native.obj \
   out/bootstrap/r5rs-wrap.obj \
-  out/bootstrap/rtlscheme.obj
+  out/bootstrap/rtlscheme.obj \
+  out/bootstrap/scheme-java.obj \
+  out/bootstrap/scheme.obj
 
 DEPEND_SCHEME_RTL=\
   $(DEPEND_SCHEME_RTL_OMIT_MAIN) \
@@ -327,6 +337,32 @@ DEPEND_JAVA_TEST_OUTPUT_FILES=\
   out/bootstrap/test/java/SubExp.out \
   out/bootstrap/test/java/TreeVisitor.out \
   out/bootstrap/test/java/TwoArgs.out
+
+DEPEND_JAVA_TEST_DIFF_FILES=\
+  out/bootstrap/test/java/Arrays.diff \
+  out/bootstrap/test/java/BinarySearch.diff \
+  out/bootstrap/test/java/BinaryTree.diff \
+  out/bootstrap/test/java/Bitwise.diff \
+  out/bootstrap/test/java/BubbleSort.diff \
+  out/bootstrap/test/java/CharString.diff \
+  out/bootstrap/test/java/Count.diff \
+  out/bootstrap/test/java/CtorTest.diff \
+  out/bootstrap/test/java/Factorial.diff \
+  out/bootstrap/test/java/LinearSearch.diff \
+  out/bootstrap/test/java/LinkedList.diff \
+  out/bootstrap/test/java/Messy.diff \
+  out/bootstrap/test/java/MyFactorial.diff \
+  out/bootstrap/test/java/NumberToString.diff \
+  out/bootstrap/test/java/ObjArray.diff \
+  out/bootstrap/test/java/OpEquals.diff \
+  out/bootstrap/test/java/OverrideTest.diff \
+  out/bootstrap/test/java/QuickSort.diff \
+  out/bootstrap/test/java/Rectangles.diff \
+  out/bootstrap/test/java/StaticMembers.diff \
+  out/bootstrap/test/java/StaticMethods.diff \
+  out/bootstrap/test/java/SubExp.diff \
+  out/bootstrap/test/java/TreeVisitor.diff \
+  out/bootstrap/test/java/TwoArgs.diff
 
 DEPEND_JAVA_TEST_EXE_FILES=\
   $(subst %.out,%.exe,$(DEPEND_JAVA_TEST_OUTPUT_FILES))
@@ -383,6 +419,7 @@ DEPEND_ALL=\
   $(DEPEND_JAVA_GC_TEST_MARKER) \
   $(DEPEND_JAVA_GC_TEST_FILES) \
   $(DEPEND_SCHEMEC_TEST_MARKER) \
+  $(DEPEND_SCHEME_RTL) \
   \
   out/bootstrap-sasm-ts.cmd \
   out/sasm-bootstrap.out \
@@ -421,7 +458,7 @@ out/bootstrap/test/java/gc/.exists : out/bootstrap/test/java/.exists
 	cmd.exe /c "if not exist out\bootstrap\test\java\gc mkdir out\bootstrap\test\java\gc"
 	cmd.exe /c "echo exists>out\bootstrap\test\java\gc\.exists"
 
-out/scheme-compiler-flat-ts.scm : $(OUT_DIR) needc-ts.scm $(deps_of_scheme_compiler)
+out/scheme-compiler-flat-ts.scm : $(OUT_DIR) needc-ts.scm $(deps_of_scheme_compiler) scheme-compiler-ts.scm scheme-compiler.scm
 	$(SCHEME) needc-ts.scm --output out/scheme-compiler-flat-ts.scm scheme-compiler-ts
 
 out/scheme-gluec-flat-ts.scm : $(OUT_DIR) needc-ts.scm scheme-gluec.scm scheme-gluec-ts.scm
@@ -437,7 +474,7 @@ out/bootstrap/test/syntax1-expanded.scm : $(SCHEMEC_FLAT_TS) tests/syntax1.scm $
 out/bootstrap-expand-java-compiler-ts.cmd : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_java_compiler)
 	$(SCHEME) needc-ts.scm --script-mode --windows-mode --expand-only --output out\bootstrap-expand-java-compiler-ts.cmd java-compiler-ts
 
-out/java-compiler-expanded.out: out/bootstrap-expand-java-compiler-ts.cmd $(DEPEND_SCHEMEC)
+out/java-compiler-expanded.out: out/bootstrap-expand-java-compiler-ts.cmd $(DEPEND_SCHEMEC) $(BOOTSTRAP_DIR)
 	cmd.exe /c "call env & call out\bootstrap-expand-java-compiler-ts.cmd"
 	cmd.exe /c "echo expanded>out\java-compiler-expanded.out"
 
@@ -459,7 +496,7 @@ out/sasm-opt-flat-ts.scm : out/sasm-opt-ts-expanded.out
 out/bootstrap-expand-sasm-ts.cmd : sasm.scm $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm)
 	$(SCHEME) needc-ts.scm --script-mode --windows-mode --expand-only --output out\bootstrap-expand-sasm-ts.cmd sasm-ts
 
-out/sasm-ts-expanded.out: out/bootstrap-expand-sasm-ts.cmd env.cmd $(DEPEND_SCHEMEC)
+out/sasm-ts-expanded.out: out/bootstrap-expand-sasm-ts.cmd env.cmd $(DEPEND_SCHEMEC) $(BOOTSTRAP_DIR)
 	cmd.exe /c "call env.cmd & call out\bootstrap-expand-sasm-ts.cmd"
 	cmd.exe /c "echo expanded>out\sasm-ts-expanded.out"
 
@@ -483,10 +520,14 @@ out/bootstrap/test/java/%.exe: out/bootstrap/test/java/%.obj rtl/mjrtl.c $(DEPEN
 	gcc -Irtl rtl/mjrtl.c $(DEPEND_MJ_RTL_OBJS) $< -o $@
 
 out/bootstrap/test/java/%.out: out/bootstrap/test/java/%.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
-$(DEPEND_JAVA_TEST_MARKER): $(BOOTSTRAP_TEST_JAVA_DIR) $(DEPEND_JAVA_TEST_OUTPUT_FILES) $(DEPEND_JAVA_TEST_EXE_FILES)
+out/bootstrap/test/java/%.diff: out/bootstrap/test/java/%.out tests/baseline/%.actual
+	fc.exe $(subst /,\,$<) $(subst /,\,$(patsubst out/bootstrap/test/java/%.out,tests/baseline/%.actual,$<))
+	cmd.exe /c "echo same>$(subst /,\,$@)"
+
+$(DEPEND_JAVA_TEST_MARKER): $(BOOTSTRAP_TEST_JAVA_DIR) $(DEPEND_JAVA_TEST_OUTPUT_FILES) $(DEPEND_JAVA_TEST_EXE_FILES) $(DEPEND_JAVA_TEST_DIFF_FILES)
 	cmd.exe /c "echo tests.done>out\bootstrap\test\java\tests.done"
 
 # java GC "stress" tests
@@ -506,7 +547,7 @@ out/bootstrap/test/java/gc/%.exe: out/bootstrap/test/java/gc/%.obj rtl/mjrtl.c $
 	gcc -Irtl rtl/mjrtl.c $(DEPEND_MJ_RTL_OBJS) $< -o $@
 
 out/bootstrap/test/java/gc/%.out: out/bootstrap/test/java/gc/%.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 $(DEPEND_JAVA_GC_TEST_MARKER): $(BOOTSTRAP_TEST_JAVA_GC_DIR) $(DEPEND_JAVA_GC_TEST_FILES)
@@ -529,11 +570,11 @@ out/bootstrap/test/call.exe: out/bootstrap/test/call.obj rtl/mjrtl.c
 	gcc -Irtl rtl/mjrtl.c $(DEPEND_RTL_OBJS) $< -o $@
 
 out/bootstrap/test/call.out: out/bootstrap/test/call.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/call.diff: out/bootstrap/test/call.out tests\baseline\call.sasm-interp.actual
-	diff --strip-trailing-cr out/bootstrap/test/call.out tests\baseline\call.sasm-interp.actual
+	fc.exe $(subst /,\,$<) tests\baseline\call.sasm-interp.actual
 	cmd.exe /c "echo same>out\bootstrap\test\call.diff"
 
 # Test scheme-compiler: apply
@@ -553,11 +594,11 @@ out/bootstrap/test/apply.exe: out/bootstrap/test/apply.obj $(DEPEND_RTL) $(DEPEN
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/apply.out: out/bootstrap/test/apply.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/apply.diff: out/bootstrap/test/apply.out tests\baseline\apply-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/apply.out tests\baseline\apply-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\apply-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\apply.diff"
 
 # Test scheme-compiler: getenv
@@ -581,7 +622,7 @@ out/bootstrap/test/getenv.out: out/bootstrap/test/getenv.exe
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/getenv.diff: out/bootstrap/test/getenv.out tests\baseline\getenv-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/getenv.out tests\baseline\getenv-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\getenv-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\getenv.diff"
 
 # Test scheme-compiler: cseconds
@@ -601,7 +642,7 @@ out/bootstrap/test/cseconds.exe: out/bootstrap/test/cseconds.obj $(DEPEND_RTL) $
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/cseconds.out: out/bootstrap/test/cseconds.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 # Test scheme-compiler: stat
@@ -621,11 +662,11 @@ out/bootstrap/test/stat.exe: out/bootstrap/test/stat.obj $(DEPEND_RTL) $(DEPEND_
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/stat.out: out/bootstrap/test/stat.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/stat.diff: out/bootstrap/test/stat.out tests\baseline\stat-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/stat.out tests\baseline\stat-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\stat-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\stat.diff"
 
 # Test scheme-compiler: delete
@@ -646,12 +687,12 @@ out/bootstrap/test/delete.exe: out/bootstrap/test/delete.obj $(DEPEND_RTL) $(DEP
 
 out/bootstrap/test/delete.out: out/bootstrap/test/delete.exe
 	cmd.exe /c "echo foo>deleteme.file"
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "if exist deleteme.file exit /b 1"
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/delete.diff: out/bootstrap/test/delete.out tests\baseline\delete-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/delete.out tests\baseline\delete-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\delete-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\delete.diff"
 
 # Test scheme-compiler: rename
@@ -672,14 +713,14 @@ out/bootstrap/test/rename.exe: out/bootstrap/test/rename.obj $(DEPEND_RTL) $(DEP
 
 out/bootstrap/test/rename.out: out/bootstrap/test/rename.exe
 	cmd.exe /c "echo foo>from.file"
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "if exist from.file exit /b 1"
 	cmd.exe /c "if not exist to.file exit /b 1"
 	cmd.exe /c "del to.file"
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/rename.diff: out/bootstrap/test/rename.out tests\baseline\rename-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/rename.out tests\baseline\rename-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\rename-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\rename.diff"
 
 # Test scheme-compiler: argv
@@ -699,11 +740,11 @@ out/bootstrap/test/argv.exe: out/bootstrap/test/argv.obj $(DEPEND_RTL) $(DEPEND_
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/argv.out: out/bootstrap/test/argv.exe
-	$< 1 2 3 4 five six 7 8 9 ten>$@.tmp
+	$(subst /,\,$<) 1 2 3 4 five six 7 8 9 ten>$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/argv.diff: out/bootstrap/test/argv.out tests\baseline\argv-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/argv.out tests\baseline\argv-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\argv-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\argv.diff"
 
 # Test scheme-compiler: disptest
@@ -723,11 +764,11 @@ out/bootstrap/test/disptest.exe: out/bootstrap/test/disptest.obj $(DEPEND_RTL) $
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/disptest.out: out/bootstrap/test/disptest.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/disptest.diff: out/bootstrap/test/disptest.out tests\baseline\disptest-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/disptest.out tests\baseline\disptest-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\disptest-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\disptest.diff"
 
 # Test scheme-compiler: disptest2
@@ -747,11 +788,11 @@ out/bootstrap/test/disptest2.exe: out/bootstrap/test/disptest2.obj $(DEPEND_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/disptest2.out: out/bootstrap/test/disptest2.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/disptest2.diff: out/bootstrap/test/disptest2.out tests\baseline\disptest2-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/disptest2.out tests\baseline\disptest2-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\disptest2-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\disptest2.diff"
 
 # Test scheme-compiler: outputfile
@@ -771,12 +812,12 @@ out/bootstrap/test/outputfile.exe: out/bootstrap/test/outputfile.obj $(DEPEND_RT
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/outputfile.out: out/bootstrap/test/outputfile.exe
-	$< out/bootstrap/test/outputfile.dat>$@.tmp
+	$(subst /,\,$<) out/bootstrap/test/outputfile.dat>$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/outputfile.diff: out/bootstrap/test/outputfile.out tests\baseline\outputfile-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/outputfile.out tests\baseline\outputfile-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/outputfile.dat tests\baseline\outputfile.dat
+	fc.exe $(subst /,\,$<) tests\baseline\outputfile-s.actual
+	fc.exe tests\baseline\outputfile.dat tests\baseline\outputfile.dat
 	cmd.exe /c "echo same>out\bootstrap\test\outputfile.diff"
 
 # Test scheme-compiler: inputfile
@@ -796,11 +837,11 @@ out/bootstrap/test/inputfile.exe: out/bootstrap/test/inputfile.obj $(DEPEND_RTL)
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/inputfile.out: out/bootstrap/test/inputfile.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/inputfile.diff: out/bootstrap/test/inputfile.out tests\baseline\inputfile-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/inputfile.out tests\baseline\inputfile-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\inputfile-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\inputfile.diff"
 
 # Test scheme-compiler: read
@@ -823,11 +864,11 @@ out/bootstrap/test/read.exe: out/bootstrap/test/read.obj $(DEPEND_RTL) $(DEPEND_
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/read.out: out/bootstrap/test/read.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/read.diff: out/bootstrap/test/read.out tests\baseline\read-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/read.out tests\baseline\read-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\read-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\read.diff"
 
 # Test scheme-compiler: read2
@@ -850,11 +891,11 @@ out/bootstrap/test/read2.exe: out/bootstrap/test/read2.obj $(DEPEND_RTL) $(DEPEN
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/read2.out: out/bootstrap/test/read2.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/read2.diff: out/bootstrap/test/read2.out tests\baseline\read2-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/read2.out tests\baseline\read2-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\read2-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\read2.diff"
 
 # Test scheme-compiler: read3
@@ -877,11 +918,11 @@ out/bootstrap/test/read3.exe: out/bootstrap/test/read3.obj $(DEPEND_RTL) $(DEPEN
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/read3.out: out/bootstrap/test/read3.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/read3.diff: out/bootstrap/test/read3.out tests\baseline\read3-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/read3.out tests\baseline\read3-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\read3-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\read3.diff"
 
 
@@ -905,11 +946,11 @@ out/bootstrap/test/peekchar.exe: out/bootstrap/test/peekchar.obj $(DEPEND_RTL) $
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/peekchar.out: out/bootstrap/test/peekchar.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/peekchar.diff: out/bootstrap/test/peekchar.out tests\baseline\peekchar-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/peekchar.out tests\baseline\peekchar-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\peekchar-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\peekchar.diff"
 
 # Test scheme-compiler: mkvec
@@ -929,11 +970,11 @@ out/bootstrap/test/mkvec.exe: out/bootstrap/test/mkvec.obj $(DEPEND_RTL) $(DEPEN
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/mkvec.out: out/bootstrap/test/mkvec.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/mkvec.diff: out/bootstrap/test/mkvec.out tests\baseline\mkvec-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/mkvec.out tests\baseline\mkvec-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\mkvec-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\mkvec.diff"
 
 # Test scheme-compiler: eqv
@@ -956,11 +997,11 @@ out/bootstrap/test/eqv.exe: out/bootstrap/test/eqv.obj $(DEPEND_RTL) $(DEPEND_SC
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/eqv.out: out/bootstrap/test/eqv.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/eqv.diff: out/bootstrap/test/eqv.out tests\baseline\eqv-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/eqv.out tests\baseline\eqv-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\eqv-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\eqv.diff"
 
 # Test scheme-compiler: eq
@@ -983,11 +1024,11 @@ out/bootstrap/test/eq.exe: out/bootstrap/test/eq.obj $(DEPEND_RTL) $(DEPEND_SCHE
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/eq.out: out/bootstrap/test/eq.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/eq.diff: out/bootstrap/test/eq.out tests\baseline\eq-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/eq.out tests\baseline\eq-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\eq-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\eq.diff"
 
 # Test scheme-compiler: vararg
@@ -1010,11 +1051,11 @@ out/bootstrap/test/vararg.exe: out/bootstrap/test/vararg.obj $(DEPEND_RTL) $(DEP
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/vararg.out: out/bootstrap/test/vararg.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/vararg.diff: out/bootstrap/test/vararg.out tests\baseline\vararg-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/vararg.out tests\baseline\vararg-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\vararg-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\vararg.diff"
 
 # Test scheme-compiler: letrec
@@ -1037,11 +1078,11 @@ out/bootstrap/test/letrec.exe: out/bootstrap/test/letrec.obj $(DEPEND_RTL) $(DEP
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/letrec.out: out/bootstrap/test/letrec.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 #out/bootstrap/test/letrec.diff: out/bootstrap/test/letrec.out tests\baseline\letrec-s.actual
-#	diff --strip-trailing-cr out/bootstrap/test/letrec.out tests\baseline\letrec-s.actual
+#	fc.exe $(subst /,\,$<) tests\baseline\letrec-s.actual
 #	cmd.exe /c "echo same>out\bootstrap\test\letrec.diff"
 
 # Test scheme-compiler: read4
@@ -1064,11 +1105,11 @@ out/bootstrap/test/read4.exe: out/bootstrap/test/read4.obj $(DEPEND_RTL) $(DEPEN
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/read4.out: out/bootstrap/test/read4.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/read4.diff: out/bootstrap/test/read4.out tests\baseline\read4-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/read4.out tests\baseline\read4-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\read4-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\read4.diff"
 
 # Test scheme-compiler: read5
@@ -1091,11 +1132,11 @@ out/bootstrap/test/read5.exe: out/bootstrap/test/read5.obj $(DEPEND_RTL) $(DEPEN
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/read5.out: out/bootstrap/test/read5.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/read5.diff: out/bootstrap/test/read5.out tests\baseline\read5-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/read5.out tests\baseline\read5-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\read5-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\read5.diff"
 
 # Test scheme-compiler: sym1
@@ -1118,11 +1159,11 @@ out/bootstrap/test/sym1.exe: out/bootstrap/test/sym1.obj $(DEPEND_RTL) $(DEPEND_
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/sym1.out: out/bootstrap/test/sym1.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/sym1.diff: out/bootstrap/test/sym1.out tests\baseline\sym1-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/sym1.out tests\baseline\sym1-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\sym1-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\sym1.diff"
 
 # Test scheme-compiler: badapply
@@ -1149,7 +1190,7 @@ out/bootstrap/test/badapply.out: out/bootstrap/test/badapply.exe tests/badapply.
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/badapply.diff: out/bootstrap/test/badapply.out tests\baseline\badapply-s.actual
-	diff --strip-trailing-cr out/bootstrap/test/badapply.out tests\baseline\badapply-s.actual
+	fc.exe $(subst /,\,$<) tests\baseline\badapply-s.actual
 	cmd.exe /c "echo same>out\bootstrap\test\badapply.diff"
 
 out/bootstrap/test/badvrhi.out: out/bootstrap/test/badvrhi.exe tests/badvrhi.cmd
@@ -1230,15 +1271,15 @@ out/bootstrap/test/gc1.exe: out/bootstrap/test/gc1.obj out/bootstrap/test/tests-
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL_OMIT_MAIN) $< out/bootstrap/test/tests-printer.obj out/bootstrap/test/tests-printer-helper.obj -o $@
 
 out/bootstrap/test/gc1.out: out/bootstrap/test/gc1.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 # out/bootstrap/test/gc1.diff: out/bootstrap/test/gc1.out tests\baseline\gc1-s.actual
-# 	diff --strip-trailing-cr out/bootstrap/test/gc1.out tests\baseline\gc1-s.actual
+# 	fc.exe $(subst /,\,$<) tests\baseline\gc1-s.actual
 # 	cmd.exe /c "echo same>out\bootstrap\test\gc1.diff"
 
 out/bootstrap/test/r5rs3.out: out/bootstrap/test/r5rs3.exe
-	$< out/bootstrap/test/r5rs3-cwof.dat>$@.tmp
+	$(subst /,\,$<) out/bootstrap/test/r5rs3-cwof.dat>$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 # Test scheme-compiler: general case
@@ -1261,11 +1302,11 @@ out/bootstrap/test/%.exe: out/bootstrap/test/%.obj $(DEPEND_RTL) $(DEPEND_SCHEME
 	gcc $(SCHEME_CFLAGS) -Irtl $(DEPEND_RTL_C) $(DEPEND_RTL_OBJS) $(DEPEND_SCHEME_RTL) $< -o $@
 
 out/bootstrap/test/%.out: out/bootstrap/test/%.exe
-	$< >$@.tmp
+	$(subst /,\,$<) >$@.tmp
 	cmd.exe /c "move $(subst /,\,$@).tmp $(subst /,\,$@)"
 
 out/bootstrap/test/%.diff: out/bootstrap/test/%.out tests/baseline/%-s.actual
-	diff --strip-trailing-cr $< $(patsubst out/bootstrap/test/%.out,tests/baseline/%-s.actual,$<)
+	fc.exe $(subst /,\,$<) $(patsubst out/bootstrap/test/%.out,tests/baseline/%-s.actual,$<)
 	cmd.exe /c "echo same>$(subst /,\,$@)"
 
 
@@ -1306,6 +1347,12 @@ out/bootstrap/debug.asm: rtl/debug.asm
 out/bootstrap/%.asm: out/bootstrap/%.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) $< --out=$@
 
+out/bootstrap/scheme.sasm : rtl/scheme.java $(DEPEND_JAVAC)
+	$(JAVAC) -l --out=$@ rtl/scheme.java
+
+out/bootstrap/scheme.sasm-opt: out/bootstrap/scheme.sasm $(DEPEND_SASMOPT)
+	$(SASMOPT) $< --out=$@
+
 # bootstrap sasm tool
 out/bootstrap-sasm-ts.cmd : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm)
 	$(SCHEME) needc-ts.scm --script-mode --windows-mode --output out\bootstrap-sasm-ts.cmd sasm
@@ -1322,7 +1369,7 @@ out/bootstrap/sasm.exe: $(DEPEND_RTL) $(DEPEND_SCHEME_RTL_OMIT_MAIN) out/sasm-bo
 out/bootstrap-sasm-opt-ts.cmd : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm_opt)
 	$(SCHEME) needc-ts.scm --script-mode --windows-mode --output out\bootstrap-sasm-opt-ts.cmd sasm-opt
 
-out/sasm-opt-bootstrap.out: out/bootstrap-sasm-opt-ts.cmd $(DEPEND_SCHEMEC)
+out/sasm-opt-bootstrap.out: out/bootstrap-sasm-opt-ts.cmd $(DEPEND_SCHEMEC) $(BOOTSTRAP_DIR)
 	cmd.exe /c "call env.cmd & call out\bootstrap-sasm-opt-ts.cmd"
 	cmd.exe /c "echo bootstrapped>out\sasm-opt-bootstrap.out"
 

@@ -114,9 +114,17 @@ out/$(TEST_OUTDIR_NAME)/test/badvshi.out: out/$(TEST_OUTDIR_NAME)/test/badvshi.e
 	./tests/badvshi.sh>$@.tmp
 	mv $@.tmp $@
 
+out/$(TEST_OUTDIR_NAME)/test/badvshi.diff: out/$(TEST_OUTDIR_NAME)/test/badvshi.out tests/baseline/badvshi-s-linux.actual
+	diff --strip-trailing-cr out/$(TEST_OUTDIR_NAME)/test/badvshi.out tests/baseline/badvshi-s-linux.actual
+	touch out/$(TEST_OUTDIR_NAME)/test/badvshi.diff
+
 out/$(TEST_OUTDIR_NAME)/test/badvslo.out: out/$(TEST_OUTDIR_NAME)/test/badvslo.exe tests/badvslo.sh
 	./tests/badvslo.sh>$@.tmp
 	mv $@.tmp $@
+
+out/$(TEST_OUTDIR_NAME)/test/badvslo.diff: out/$(TEST_OUTDIR_NAME)/test/badvslo.out tests/baseline/badvslo-s-linux.actual
+	diff --strip-trailing-cr out/$(TEST_OUTDIR_NAME)/test/badvslo.out tests/baseline/badvslo-s-linux.actual
+	touch out/$(TEST_OUTDIR_NAME)/test/badvslo.diff
 
 out/$(TEST_OUTDIR_NAME)/test/badsrhi.out: out/$(TEST_OUTDIR_NAME)/test/badsrhi.exe tests/badsrhi.sh
 	./tests/badsrhi.sh>$@.tmp
@@ -130,9 +138,17 @@ out/$(TEST_OUTDIR_NAME)/test/badsshi.out: out/$(TEST_OUTDIR_NAME)/test/badsshi.e
 	./tests/badsshi.sh>$@.tmp
 	mv $@.tmp $@
 
+out/$(TEST_OUTDIR_NAME)/test/badsshi.diff: out/$(TEST_OUTDIR_NAME)/test/badsshi.out tests/baseline/badsshi-s-linux.actual
+	diff --strip-trailing-cr out/$(TEST_OUTDIR_NAME)/test/badsshi.out tests/baseline/badsshi-s-linux.actual
+	touch out/$(TEST_OUTDIR_NAME)/test/badsshi.diff
+
 out/$(TEST_OUTDIR_NAME)/test/badsslo.out: out/$(TEST_OUTDIR_NAME)/test/badsslo.exe tests/badsslo.sh
 	./tests/badsslo.sh>$@.tmp
 	mv $@.tmp $@
+
+out/$(TEST_OUTDIR_NAME)/test/badsslo.diff: out/$(TEST_OUTDIR_NAME)/test/badsslo.out tests/baseline/badsslo-s-linux.actual
+	diff --strip-trailing-cr out/$(TEST_OUTDIR_NAME)/test/badsslo.out tests/baseline/badsslo-s-linux.actual
+	touch out/$(TEST_OUTDIR_NAME)/test/badsslo.diff
 
 # Test scheme-compiler: gc1
 out/$(TEST_OUTDIR_NAME)/test/tests-printer.sasm: tests/printer.scm $(DEPEND_TEST_SCHEMEC) $(DEPEND_TEST_OUTPUT_DIR)

@@ -70,9 +70,9 @@
    ;; add eax, N
    (instruction (input-pattern `(assign (,register? dest) (op ,sasm-op) (,register? op-a) (const (,intconst? op-b))))
                 (rewrite-rule ((assign (replace dest) (replace op-a)) (dest sym-register) (op-a sym-register))
-                              (,(format "~ ~, ~" mach-op "~" "~")
+                              (,(format "~ ~, 0x~" mach-op "~" "~")
                                (dest register)
-                               (op-b intconst))))
+                               (op-b x86-32-bit-intconst))))
 
    ;; add eax, ebx [special case of (assign (reg dest) (op add) (reg dest) (reg op))]
    (instruction (input-pattern `(assign (,register? dest) (op ,sasm-op) (,register? dest) (,register? operand)))

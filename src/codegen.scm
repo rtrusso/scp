@@ -11,51 +11,92 @@
 
 (declare-genproc codegen)
 
-(define-genproc (codegen :codegen-program 
+(define-genproc (codegen :codegen-program
                          (p program) (env global-symtab) (ctx context))
-  (define main-class
-    (let ((main (let ((ctx (assoc 'main-class (safe-contents 'context ctx))))
-                  (if ctx
-                      (lookup-class-type (cadr ctx) env)
-                      (@ast p :main-class)))))
-      (if (and main
-               (ast-node-attr? main ':potential-main-class))
-          main
-          (error "Could not find suitable main class"))))
-  (emit-code ctx
-             `(extern rtl-malloc))
-  (emit-code ctx
-             `(extern mj-system-out-println))
-  (emit-code ctx
-             `(extern cp-rtl-malloc))
-  (emit-code ctx
-             `(extern cp-rtl-array-malloc))
-  (emit-code ctx
-             `(extern cp-mj-system-out-println))
-  (emit-code ctx
-             `(extern cp-rtl-array-length))
-  (emit-code ctx
-             `(export mm-rtl-heap-begin-mark-global-vars))
-  (emit-code ctx
-             `(export mm-rtl-heap-end-mark-global-vars))
-  (emit-code ctx
-             `(entry ,(get-entry-point main-class)))
-  (emit-code ctx
-             `(global mm-rtl-heap-begin-mark-global-vars (const 0)))
-  (class-info-preamble (@ast p :class-list) env ctx)
-  (for-each (lambda (class)
-              (class-preamble class env ctx))
-            (@ast p :class-list))
-  (emit-code ctx
-             `(global mm-rtl-heap-end-mark-global-vars (const 0)))
-  (ast-visit p
-             (ast-visit-context 
-              '(string-constant-expression)
-              (lambda (exp)
-                (codegen-declare-string-constant exp ctx))))
-  (for-each (lambda (class)
-              (codegen class env ctx))
-            (@ast p :class-list)))
+  (let* ((omit-main-class? (not (not (assoc 'omit-main-class (safe-contents 'context ctx)))))
+         (main-class (let ((main (let ((ctx (assoc 'main-class (safe-contents 'context ctx))))
+                                   (if ctx
+                                       (lookup-class-type (cadr ctx) env)
+                                       (@ast p :main-class)))))
+                       (if omit-main-class?
+                           #f
+                           (if (and main
+                                    (ast-node-attr? main ':potential-main-class))
+                               main
+                               (error "Could not find suitable main class"))))))
+    (emit-code ctx
+               `(extern rtl-malloc))
+    (emit-code ctx
+               `(extern mj-system-out-println))
+    (emit-code ctx
+               `(extern cp-rtl-malloc))
+    (emit-code ctx
+               `(extern cp-rtl-array-malloc))
+    (emit-code ctx
+               `(extern cp-mj-system-out-println))
+    (emit-code ctx
+               `(extern cp-rtl-array-length))
+    (if (not omit-main-class?)
+        (begin
+          (emit-code ctx
+                     `(export mm-rtl-heap-begin-mark-global-vars))
+          (emit-code ctx
+                     `(export mm-rtl-heap-end-mark-global-vars))
+          (emit-code ctx
+                     `(entry ,(get-entry-point main-class)))
+          (emit-code ctx
+                     `(global mm-rtl-heap-begin-mark-global-vars (const 0))))
+        (begin
+          (emit-code ctx
+                     '(extern cp-rtl-add-global-root-range))
+          (emit-code ctx
+                     '(export $java-library-entry))
+          (emit-code ctx
+                     `(function (name $java-library-entry)
+                                (locals 0)
+                                (body (perform (op push-frame))
+                                      (perform (op reserve-locals) (const 0))
+                                      ,@(insn-seq:insns
+                                         (insn-seq '()
+                                                   '(accum index operand this)
+                                                   `((assign (reg accum) (op load-array) (const begin-mark-global-vars-range) (const 0))
+                                                     (branch-nonzero (label $java-library-entry/exit) (reg accum))
+                                                     (assign (reg accum) (const begin-mark-global-vars-range))
+                                                     (push (reg accum))
+                                                     (perform (op call) (const cp-rtl-add-global-root-range))
+                                                     (label $java-library-entry/exit)
+                                                     (perform (op pop-frame))
+                                                     (return (const 0))
+                                                     )
+                                                   )
+                                         )
+                                      )
+                                ))
+          (emit-code ctx
+                     '(global begin-mark-global-vars-range (const 0)))
+          (emit-code ctx
+                     '(global end-mark-global-vars-range-pointer (label end-mark-global-vars-range)))
+          )
+        )
+    (class-info-preamble (@ast p :class-list) env ctx)
+    (for-each (lambda (class)
+                (class-preamble class env ctx))
+              (@ast p :class-list))
+    (if (not omit-main-class?)
+        (begin
+          (emit-code ctx
+                     `(global mm-rtl-heap-end-mark-global-vars (const 0))))
+        (begin
+          (emit-code ctx
+                     '(global end-mark-global-vars-range (const 0)))))
+    (ast-visit p
+               (ast-visit-context
+                '(string-constant-expression)
+                (lambda (exp)
+                  (codegen-declare-string-constant exp ctx))))
+    (for-each (lambda (class)
+                (codegen class env ctx))
+              (@ast p :class-list))))
 
 (define-genproc (codegen :codegen-class
                          (c class) (env global-symtab) (ctx context))
@@ -83,7 +124,11 @@
                    c
                    env
                    (register-target 'accum)
-                   (return-linkage (length (@ast m :param-list))))))))))
+                   (return-linkage (length (@ast m :param-list))))))))
+      (emit-code ctx
+                 `(extern ,(class-get-method-label c m)))
+      )
+  )
 
 (define-genproc (codegen :codegen-constructor
                          (ctor constructor) (c class) (env global-symtab) (ctx context))
@@ -796,6 +841,10 @@
 (define (class-preamble class env context)
   (emit-code context
              `(export ,(class-get-name-label class)))
+  (for-each (lambda (ctor)
+              (emit-code context
+                         `(export ,(class-get-constructor-label class ctor))))
+            (@ast class :constructors))
   (for-each (lambda (method-entry)
               (emit-code context
                          `(export ,(cdr method-entry))))

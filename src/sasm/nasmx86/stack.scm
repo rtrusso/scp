@@ -5,8 +5,8 @@
    ;; push & pop ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
    (instruction (input-pattern `(push (const (,intconst? arg))))
-                (rewrite-rule "push dword ~"
-                              (arg intconst)))
+                (rewrite-rule "push dword 0x~"
+                              (arg x86-32-bit-intconst)))
 
    (instruction (input-pattern `(push (result (op load-array) (,register? ptr) (const (,intconst? offset)))))
                 (rewrite-rule "push dword [~~~]"

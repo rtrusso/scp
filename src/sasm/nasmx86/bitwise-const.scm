@@ -6,15 +6,15 @@
 
    (instruction (input-pattern `(assign (,register? dest) (op bit-lshift) (,register? src) (const (,intconst? n-bits))))
                 (rewrite-rule ((assign (replace dest) (replace src)) (dest sym-register) (src sym-register))
-                              ("sal ~, ~" (dest register) (n-bits intconst))))
+                              ("sal ~, 0x~" (dest register) (n-bits x86-32-bit-intconst))))
 
    (instruction (input-pattern `(assign (,register? dest) (op bit-rshift) (,register? src) (const (,intconst? n-bits))))
                 (rewrite-rule ((assign (replace dest) (replace src)) (dest sym-register) (src sym-register))
-                              ("shr ~, ~" (dest register) (n-bits intconst))))
+                              ("shr ~, 0x~" (dest register) (n-bits x86-32-bit-intconst))))
 
    (instruction (input-pattern `(assign (,register? dest) (op bit-arith-rshift) (,register? src) (const (,intconst? n-bits))))
                 (rewrite-rule ((assign (replace dest) (replace src)) (dest sym-register) (src sym-register))
-                              ("sar ~, ~" (dest register) (n-bits intconst))))
+                              ("sar ~, 0x~" (dest register) (n-bits x86-32-bit-intconst))))
 
    ))
 

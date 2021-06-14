@@ -4,6 +4,9 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#ifdef linux
+#include <unistd.h>
+#endif
 #include <sasm.h>
 
 int SYM(c_scheme_argc) = 0;
@@ -192,4 +195,9 @@ int SYM(c_scheme_current_milliseconds)() {
     millisec += ts.tv_sec * 1000;
     return millisec;
 #endif
+}
+
+void SYM(c_scheme_error_stub)() {
+    _ftprintf(stderr, TEXT("one of the scheme.java __sasm_impl functions was called, currently unsupported"));
+    ExitProcess(1);
 }

@@ -219,6 +219,14 @@ DEPEND_SCHEMEC_SIMPLE_TEST=\
   out/bootstrap/test/read10.diff \
   out/bootstrap/test/read11.out \
   out/bootstrap/test/read11.diff \
+  out/bootstrap/test/n2s.out \
+  out/bootstrap/test/n2s.diff \
+  out/bootstrap/test/n2s2.out \
+  out/bootstrap/test/n2s2.diff \
+  out/bootstrap/test/quot2.out \
+  out/bootstrap/test/quot2.diff \
+  out/bootstrap/test/interop1.out \
+  out/bootstrap/test/interop1.diff \
   \
   out/bootstrap/test/badapply.out \
   out/bootstrap/test/badapply.diff \
@@ -294,7 +302,9 @@ DEPEND_SCHEME_RTL_OMIT_MAIN=\
   out/bootstrap/r5rs-library.o \
   out/bootstrap/r5rs-native.o \
   out/bootstrap/r5rs-wrap.o \
-  out/bootstrap/rtlscheme.o
+  out/bootstrap/rtlscheme.o \
+  out/bootstrap/scheme-java.o \
+  out/bootstrap/scheme.o
 
 DEPEND_SCHEME_RTL=\
   $(DEPEND_SCHEME_RTL_OMIT_MAIN) \
@@ -329,6 +339,32 @@ DEPEND_JAVA_TEST_OUTPUT_FILES=\
   out/bootstrap/test/java/SubExp.out \
   out/bootstrap/test/java/TreeVisitor.out \
   out/bootstrap/test/java/TwoArgs.out
+
+DEPEND_JAVA_TEST_DIFF_FILES=\
+  out/bootstrap/test/java/Arrays.diff \
+  out/bootstrap/test/java/BinarySearch.diff \
+  out/bootstrap/test/java/BinaryTree.diff \
+  out/bootstrap/test/java/Bitwise.diff \
+  out/bootstrap/test/java/BubbleSort.diff \
+  out/bootstrap/test/java/CharString.diff \
+  out/bootstrap/test/java/Count.diff \
+  out/bootstrap/test/java/CtorTest.diff \
+  out/bootstrap/test/java/Factorial.diff \
+  out/bootstrap/test/java/LinearSearch.diff \
+  out/bootstrap/test/java/LinkedList.diff \
+  out/bootstrap/test/java/Messy.diff \
+  out/bootstrap/test/java/MyFactorial.diff \
+  out/bootstrap/test/java/NumberToString.diff \
+  out/bootstrap/test/java/ObjArray.diff \
+  out/bootstrap/test/java/OpEquals.diff \
+  out/bootstrap/test/java/OverrideTest.diff \
+  out/bootstrap/test/java/QuickSort.diff \
+  out/bootstrap/test/java/Rectangles.diff \
+  out/bootstrap/test/java/StaticMembers.diff \
+  out/bootstrap/test/java/StaticMethods.diff \
+  out/bootstrap/test/java/SubExp.diff \
+  out/bootstrap/test/java/TreeVisitor.diff \
+  out/bootstrap/test/java/TwoArgs.diff
 
 DEPEND_JAVA_TEST_EXE_FILES=\
   $(subst %.out,%.exe,$(DEPEND_JAVA_TEST_OUTPUT_FILES))
@@ -385,6 +421,7 @@ DEPEND_ALL=\
   $(DEPEND_JAVA_GC_TEST_MARKER) \
   $(DEPEND_JAVA_GC_TEST_FILES) \
   $(DEPEND_SCHEMEC_TEST_MARKER) \
+  $(DEPEND_SCHEME_RTL) \
   \
   out/bootstrap-sasm-ts.sh \
   out/sasm-bootstrap.out \
@@ -422,7 +459,7 @@ out/bootstrap/test/java/gc/.exists : out/bootstrap/test/java/.exists
 	if [ -d out/bootstrap/test/java/gc ]; then echo foo>/dev/null; else mkdir out/bootstrap/test/java/gc; fi
 	touch out/bootstrap/test/java/gc/.exists
 
-out/scheme-compiler-flat-ts.scm : $(OUT_DIR) needc-ts.scm $(deps_of_scheme_compiler)
+out/scheme-compiler-flat-ts.scm : $(OUT_DIR) needc-ts.scm $(deps_of_scheme_compiler) scheme-compiler-ts.scm scheme-compiler.scm
 	$(SCHEME) needc-ts.scm --output out/scheme-compiler-flat-ts.scm scheme-compiler-ts
 
 out/scheme-gluec-flat-ts.scm : $(OUT_DIR) needc-ts.scm scheme-gluec.scm scheme-gluec-ts.scm
@@ -490,7 +527,11 @@ out/bootstrap/test/java/%.out: out/bootstrap/test/java/%.exe
 	$< >$@.tmp
 	mv $@.tmp $@
 
-$(DEPEND_JAVA_TEST_MARKER): $(BOOTSTRAP_TEST_JAVA_DIR) $(DEPEND_JAVA_TEST_OUTPUT_FILES) $(DEPEND_JAVA_TEST_EXE_FILES)
+out/bootstrap/test/java/%.diff: out/bootstrap/test/java/%.out tests/baseline/%.actual
+	diff --strip-trailing-cr $< $(patsubst out/bootstrap/test/java/%.out,tests/baseline/%.actual,$<)
+	touch $@
+
+$(DEPEND_JAVA_TEST_MARKER): $(BOOTSTRAP_TEST_JAVA_DIR) $(DEPEND_JAVA_TEST_OUTPUT_FILES) $(DEPEND_JAVA_TEST_EXE_FILES) $(DEPEND_JAVA_TEST_DIFF_FILES)
 	touch out/bootstrap/test/java/tests.done
 
 # java GC "stress" tests
@@ -1279,8 +1320,6 @@ out/bootstrap/test/%.diff: out/bootstrap/test/%.out tests/baseline/%-s.actual
 	diff --strip-trailing-cr $< $(patsubst out/bootstrap/test/%.out,tests/baseline/%-s.actual,$<)
 	touch $@
 
-
-
 # Compile scheme RTL
 out/bootstrap/r5rs-library.sasm: rtl/r5rs-library.scm $(DEPEND_SCHEMEC)
 	$(SCHEMEC) rtl/r5rs-library.scm --outdir out/bootstrap --conspiracy --no-entry
@@ -1316,6 +1355,12 @@ out/bootstrap/debug.asm: rtl/debug.asm
 
 out/bootstrap/%.asm: out/bootstrap/%.sasm-opt $(DEPEND_SASMC)
 	$(SASMC) $< --out=$@
+
+out/bootstrap/scheme.sasm : rtl/scheme.java $(DEPEND_JAVAC)
+	$(JAVAC) -l --out=$@ rtl/scheme.java
+
+out/bootstrap/scheme.sasm-opt: out/bootstrap/scheme.sasm $(DEPEND_SASMOPT)
+	$(SASMOPT) $< --out=$@
 
 # bootstrap sasm tool
 out/bootstrap-sasm-ts.sh : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_sasm)
