@@ -458,6 +458,9 @@ out/bootstrap/test/java/gc/.exists : out/bootstrap/test/java/.exists
 	cmd.exe /c "if not exist out\bootstrap\test\java\gc mkdir out\bootstrap\test\java\gc"
 	cmd.exe /c "echo exists>out\bootstrap\test\java\gc\.exists"
 
+# Flatten the scheme compiler, meaning eliminate (need) statements, using needc.
+# The scheme compiler itself does not use syntax-rules, so therefore it does not depend on
+# a scheme implementation that supports R5RS syntax.
 out/scheme-compiler-flat-ts.scm : $(OUT_DIR) needc-ts.scm $(deps_of_scheme_compiler) scheme-compiler-ts.scm scheme-compiler.scm
 	$(SCHEME) needc-ts.scm --output out/scheme-compiler-flat-ts.scm scheme-compiler-ts
 
@@ -469,6 +472,17 @@ out/bootstrap/test/apply-expanded.scm : tests/apply.scm $(BOOTSTRAP_TEST_DIR) $(
 
 out/bootstrap/test/syntax1-expanded.scm : $(SCHEMEC_FLAT_TS) tests/syntax1.scm $(BOOTSTRAP_TEST_DIR) $(DEPEND_SCHEMEC)
 	$(SCHEMEC) tests/syntax1.scm --output out/bootstrap/test/syntax1-expanded.scm --expand-only
+
+# Flatten and this time also expand the scheme compiler, to aid in the translation to C.
+out/bootstrap-expand-scheme-compiler.cmd : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_scheme_compiler) scheme-compiler.scm
+	$(SCHEME) needc-ts.scm --script-mode --windows-mode --expand-only --output out\bootstrap-expand-scheme-compiler.cmd scheme-compiler
+
+out/scheme-compiler-expanded.out: out/bootstrap-expand-scheme-compiler.cmd $(DEPEND_SCHEMEC) $(BOOTSTRAP_DIR)
+	cmd.exe /c "call env & call out\bootstrap-expand-scheme-compiler.cmd"
+	cmd.exe /c "echo expanded>out\scheme-compiler-expanded.out"
+
+out/scheme-compiler-expanded-flat.scm : out/scheme-compiler-expanded.out
+	$(SCHEME) needc-ts.scm --root out\bootstrap --flat-names --output out\scheme-compiler-expanded-flat.scm scheme-compiler
 
 # Expand, flatten minijava compiler
 out/bootstrap-expand-java-compiler-ts.cmd : $(OUT_DIR) $(DEPEND_NEEDC) $(deps_of_java_compiler)

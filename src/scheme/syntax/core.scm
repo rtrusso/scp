@@ -49,35 +49,55 @@
          (generated-name? (list-ref binding 1)))))
 
 (define (check-bad-binding context env name)
+  ;; (display ";; check-bad-binding ")
+  ;; (display name)
+  ;; (newline)
   (let ((binding (bound-value env name)))
     (if (and (not (free? binding))
              (generated-name? (list-ref binding 1)))
-        (error (string-append "invalid binding "
-                              context)
-               (list-ref binding 1)))))
+        (begin
+          ;; (display ";; check-bad-binding found problem ")
+          ;; (newline)
+          (error (string-append "bad syntax: "
+                                context
+                                " -- ")
+                 name)
+          )
+        ))
+  ;; (display ";; check-bad-binding done")
+  ;; (newline)
+  )
 
 (define (binding->global binding)
   (define (rj pad s n)
     (if (>= (string-length s) n)
         s
         (rj pad (string-append pad s) n)))
-;  (display "binding->global ") (write binding) (newline)
-  (if (free? binding)
-      (list-ref binding 1)
-      (string->symbol (string-append (symbol->string (car binding))
-                                     "_"
-                                     (rj "0"
-                                         (number->string (list-ref binding 2))
-                                         8)
-                                     "@"
-                                     (let ((sym (list-ref binding 1)))
-                                       (if (not (symbol? sym))
-                                           (error "invalid binding " (list-ref binding 1)))
-                                       (if (generated-name? sym)
-                                           (error "invalid binding, generated name " (list-ref binding 1)))
-                                       (symbol->string sym))))))
+  ;; (display "binding->global ") (write binding) (newline)
+  (cond ((free? binding)
+         (list-ref binding 1))
+        ((bound? binding)
+         (string->symbol (string-append (symbol->string (car binding))
+                                        "_"
+                                        (rj "0"
+                                            (number->string (list-ref binding 2))
+                                            8)
+                                        "@"
+                                        (let ((sym (list-ref binding 1)))
+                                          (if (not (symbol? sym))
+                                              (error "invalid binding " (list-ref binding 1)))
+                                          (if (generated-name? sym)
+                                              (error "invalid binding, generated name " (list-ref binding 1)))
+                                          (symbol->string sym)))))
+        (else
+         (error "syntax error -- " binding))))
 
 (define (rename-variable env name)
   (check-bad-binding "rename-variable" env name)
-  (binding->global (bound-value env name)))
-
+  ;; (display "before binding->global ")
+  ;; (display name)
+  ;; (newline)
+  (let ((result (binding->global (bound-value env name))))
+    ;; (display "after binding->global")
+    ;; (newline)
+    result))

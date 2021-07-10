@@ -6,5 +6,10 @@
         (cons (cons keyword (list 'specform keyword expander))
               *special-forms*)))
 (define (expand-special-form specform expression environment context)
-  ((list-ref specform 2) expression environment context))
+  ;; (display ";; expand-special-form start")
+  ;; (newline)
+  (let ((result ((list-ref specform 2) expression environment context)))
+    ;; (display ";; expand-special-form done")
+    ;; (newline)
+    result))
 

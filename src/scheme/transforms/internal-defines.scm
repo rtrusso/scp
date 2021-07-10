@@ -14,11 +14,13 @@
                                (map define-symbol defines)
                                (map rewrite-defines (map define-code defines)))
                    ,@(map rewrite-defines (reverse code))))))
-        (let ((expr (car input)))
-          (if (and (pair? expr)
-                   (eqv? 'define (car expr)))
-              (iter (cdr input) (cons expr defines) code)
-              (iter (cdr input) defines (cons expr code))))))
+        (if (not (pair? input))
+            input
+            (let ((expr (car input)))
+              (if (and (pair? expr)
+                       (eqv? 'define (car expr)))
+                  (iter (cdr input) (cons expr defines) code)
+                  (iter (cdr input) defines (cons expr code)))))))
   (if (not (pair? code))
       code
       (case (car code)

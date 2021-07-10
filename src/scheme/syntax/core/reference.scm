@@ -3,11 +3,30 @@
     (and (not (free? val)) (not (bound? val)))))
 
 (define (expand-variable-reference expression environment context)
+  ;; (display ";; expand-variable-reference ")
+  ;; (display expression)
+  ;; (newline)
   (if (bound-syntax? expression environment)
-      (error "Invalid syntax "
+      (begin
+        (display ";; expand-variable-reference invalid-syntax ")
+        (display expression)
+        (newline)
+        (error "Invalid syntax "
              expression
              (bound-value environment expression)
-             context))
+             context)
+        )
+      )
+  ;; (display ";; before check-bad-binding")
+  ;; (display expression)
+  ;; (newline)
   (check-bad-binding "expand-variable-reference" environment expression)
-  (rename-variable environment expression))
+  ;; (display ";; before rename-variable ")
+  ;; (display expression)
+  ;; (newline)
+  (let ((result (rename-variable environment expression)))
+    ;; (display ";; after rename-variable ")
+    ;; (display expression)
+    ;; (newline)
+    result))
 

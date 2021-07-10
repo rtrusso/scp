@@ -19,7 +19,7 @@ echo ##########################################################################
 echo ## Scheme and SASM Tool Bootstrap
 echo ##########################################################################
 
-call make -f bootstrap.win32.makefile
+call make -f bootstrap.win32.makefile out/scheme-compiler-expanded-flat.scm
 if not exist out\bootstrap\sasm.exe exit /b 1
 if not exist out\bootstrap\sasm-opt.exe exit /b 1
 if not exist out\bootstrap\schemec.exe exit /b 1

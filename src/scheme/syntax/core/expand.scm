@@ -32,7 +32,7 @@
   )
 
 ;; (define (debug-expand . args)
-;;   (if (> *expand-count* 850)
+;;   (if (> *expand-count* 1)
 ;;       (begin (for-each display args)
 ;;              (newline))))
 
@@ -52,44 +52,47 @@
                                              `((parent ,context)))))
 
         ((name? expression)
-;         (display "expanding name ")
-;         (write expression)
-;         (newline)
-;         (debug-expand "expand reference " expression)
+         ;; (display "expanding name ")
+         ;; (write expression)
+         ;; (newline)
+         ;; (debug-expand "expand reference " expression)
          (set! *expand-reference-count* (+ 1 *expand-reference-count*))
-         (expand-variable-reference expression
-                                     environment
-                                     (expand-context2 'context/var-reference
-                                                     `((parent ,context)))))
+         (let ((result (expand-variable-reference expression
+                                                  environment
+                                                  (expand-context2 'context/var-reference
+                                                                   `((parent ,context))))))
+           ;; (debug-expand "expand-variable-reference done " expression)
+           ;; (debug-expand "expand-variable-reference result " result)
+           result))
         ((pair? expression)
-;         (display "expanding pair expression: ")
-;         (write expression)
-;         (newline)
+         ;; (display "expanding pair expression: ")
+         ;; (write expression)
+         ;; (newline)
          (if (name? (car expression))
              (let ((binding (bound-value environment (car expression))))
                (cond ((macro? binding)
                       (set! *expand-macro-count* (+ 1 *expand-macro-count*))
-;                      (debug-expand "expand macro-app " expression)
+                      ;; (debug-expand "expand macro-app " expression)
                       (expand-macro-application binding
                                                  expression
                                                  environment
                                                  context))
                      ((special-form? binding)
                       (set! *expand-specform-count* (+ 1 *expand-specform-count*))
-;                      (debug-expand "expand specform " expression)
+                      ;; (debug-expand "expand specform " expression)
                       (expand-special-form binding
                                             expression
                                             environment
                                             context))
                      (else
-;                      (debug-expand "expand app1 " expression)
+                      ;; (debug-expand "expand app1 " expression)
                       (expand-application
                        expression
                        environment
                        (expand-context2 'context/application
                                         `((parent ,context)))))))
              (begin
-;               (debug-expand "expand app2 " expression)
+               ;; (debug-expand "expand app2 " expression)
                (expand-application expression
                                    environment
                                    (expand-context2 'context/application
@@ -111,26 +114,44 @@
                (loop (cdr remaining-code))))))
 
 (define (scheme-expand-macros code environment)
+  ;; (display ";; scheme-expand-macros ")
+  ;; (display code)
+  ;; (newline)
   (set! *expand-remaining*
         (+ (length code) 1))
   (map (lambda (exp)
+         ;; (display ";; scheme-expand-macros map ")
+         ;; (display exp)
+         ;; (newline)
          (set! *expand-remaining* (- *expand-remaining* 1))
-         (expand exp environment (top-level-context)))
+         (let ((map-result (expand exp environment (top-level-context))))
+           ;; (display ";; scheme-expand-macros map done ")
+           ;; (display exp)
+           ;; (display " -> ")
+           ;; (display map-result)
+           ;; (newline)
+           map-result))
        code))
 
 (define (scheme-expand-expression expression environment)
   (expand expression environment (top-level-context)))
 
 (define (expand-application expression environment context)
+  ;; (display ";; expand-application ")
+  ;; (display expression)
+  ;; (newline)
   (set! *expand-application-count* (+ 1 *expand-application-count*))
-  (cons
-   (expand (car expression)
-            environment
-            (expand-context2 'context/application-op
-                            `((parent ,context))))
-   (map (lambda (exp)
-          (expand exp
-                   environment
-                   (expand-context2 'context/context
-                                   `((parent ,context)))))
-        (cdr expression))))
+  (let ((result (cons
+                 (expand (car expression)
+                         environment
+                         (expand-context2 'context/application-op
+                                          `((parent ,context))))
+                 (map (lambda (exp)
+                        (expand exp
+                                environment
+                                (expand-context2 'context/context
+                                                 `((parent ,context)))))
+                      (cdr expression)))))
+    ;; (display ";; expand-application done")
+    ;; (newline)
+    result))

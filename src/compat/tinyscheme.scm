@@ -105,3 +105,5 @@
 
 (define *argv* (list->vector (cons "scheme-interpreter" *args*)))
 
+(define (read-file-into-list-at-compile-time filename)
+  (rfilact-impl filename))

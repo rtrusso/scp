@@ -1,4 +1,4 @@
 (need util/readhelp)
 
-(define (read-file-into-list-at-compile-time . args)
+(define (rfilact-impl . args)
   (read-file-into-list-symbolically args))
